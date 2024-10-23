@@ -1,10 +1,10 @@
 import React, { useState, useReducer, useRef } from "react";
-import { SafeAreaView, ScrollView, Dimensions, Animated } from "react-native";
+import { SafeAreaView, FlatList, Dimensions, Animated } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { useNavigation } from "@react-navigation/native";
 import { styled } from "styled-components/native";
 
-const { height, width } = Dimensions.get("window"); // Get both height and width of the screen
+const { height, width } = Dimensions.get("window");
 
 // Statyczne dane dla kart
 const data = [
@@ -52,15 +52,13 @@ const MainContainer = styled.View`
 
 const CardContainer = styled(Animated.View)`
   border-radius: 30px;
-  background-color: #680f0f;
+  background-color: #f7f7f7;
   align-self: center;
 `;
 
-const CardImage = styled.Image`
+const CardImage = styled(Animated.Image)`
   width: 100%;
-  height: 65%;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  height: 350px;
 `;
 
 const CardDetails = styled.View`
@@ -88,54 +86,111 @@ const CardExtraDetails = styled.Text`
 //1.
 const cardSwiper = () => {
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-  const animations = useRef(data.map(() => new Animated.Value(0.75))).current;
+  const [animationComplete, setAnimationComplete] = useState(false); // Track animation completion
+  const animations = useRef(
+    data.map(() => ({
+      scale: new Animated.Value(0.75),
+      borderRadius: new Animated.Value(30),
+    }))
+  ).current;
 
   const toggleExpandCard = (cardIndex: number) => {
-    const isExpanded = expandedCardId === data[cardIndex].id;
+    const selectedCardId = data[cardIndex].id;
+    const isExpanded = expandedCardId === selectedCardId;
 
-    Animated.timing(animations[cardIndex], {
-      toValue: isExpanded ? 0.75 : 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
+    console.log("Currently expandedCardId:", expandedCardId);
+    console.log("Selected Card ID:", selectedCardId);
+    console.log("Is Expanded:", isExpanded);
 
-    setExpandedCardId(isExpanded ? null : data[cardIndex].id);
+    Animated.parallel([
+      Animated.timing(animations[cardIndex].scale, {
+        toValue: isExpanded ? 0.75 : 1,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animations[cardIndex].borderRadius, {
+        toValue: isExpanded ? 30 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      // Dopiero po zakończeniu animacji zmieniamy stan
+      if (isExpanded) {
+        setExpandedCardId(null);
+      } else {
+        setExpandedCardId(selectedCardId);
+      }
+    });
   };
 
   const getCardStyle = (cardIndex: number) => {
-    const animatedHeight = animations[cardIndex].interpolate({
-      inputRange: [0.75, 0.85],
-      outputRange: [height * 0.75, height], // Height in pixels
+    const numberOfImages = data[cardIndex].image.length;
+    const imageHeight = 350;
+    const totalHeight = numberOfImages * imageHeight;
+
+    const animatedHeight = animations[cardIndex].scale.interpolate({
+      inputRange: [0.75, 1],
+      outputRange: [height * 0.75, totalHeight], // sprawdz dodatkowe +200
     });
 
-    const animatedWidth = animations[cardIndex].interpolate({
+    const animatedWidth = animations[cardIndex].scale.interpolate({
       inputRange: [0.75, 1],
-      outputRange: [width * 0.9, width], // Width in pixels
+      outputRange: [width * 0.88, width],
     });
 
     return {
       height: animatedHeight,
       width: animatedWidth,
-      // marginHorizontal: animations[cardIndex].interpolate({
-      //   inputRange: [0.75, 1],
-      //   outputRange: [width * 0.05, 0], // Remove horizontal margin when expanded
-      // }),
-      // marginVertical: animations[cardIndex].interpolate({
-      //   inputRange: [0.75, 1],
-      //   outputRange: [height, 0], // Remove vertical margin when expanded
-      // }),
+      borderRadius: animations[cardIndex].borderRadius,
+      marginVertical: animations[cardIndex].scale.interpolate({
+        inputRange: [0.75, 1],
+        outputRange: [60, 0],
+      }),
     };
   };
 
   const Card = ({ card, cardIndex }) => {
     const isExpanded = expandedCardId === card.id;
+
+    console.log(`Card ${card.id} is ${isExpanded ? "expanded" : "collapsed"}`);
+    console.log("Current expandedCardId:", expandedCardId);
+
     return (
       <CardContainer style={getCardStyle(cardIndex)}>
-        <CardImage source={{ uri: card.image[0] }} />
+        {isExpanded ? (
+          <>
+            <FlatList
+              data={card.image}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <CardImage
+                  source={{ uri: item }}
+                  style={{
+                    borderTopLeftRadius: animations[cardIndex].borderRadius,
+                    borderTopRightRadius: animations[cardIndex].borderRadius,
+                  }}
+                />
+              )}
+              ListHeaderComponent={
+                <CardDetails>
+                  <CardTitle>{card.name}</CardTitle>
+                  <CardDescription>{card.description}</CardDescription>
+                </CardDetails>
+              }
+            />
+          </>
+        ) : (
+          <CardImage
+            source={{ uri: card.image[0] }}
+            style={{
+              borderTopLeftRadius: animations[cardIndex].borderRadius,
+              borderTopRightRadius: animations[cardIndex].borderRadius,
+            }}
+          />
+        )}
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
           <CardDescription>{card.description}</CardDescription>
-          {isExpanded && <CardExtraDetails>KURWAAAAA</CardExtraDetails>}
         </CardDetails>
       </CardContainer>
     );
@@ -146,16 +201,17 @@ const cardSwiper = () => {
       <Swiper
         cards={data}
         renderCard={(card, cardIndex) => (
-          <Card card={card} cardIndex={cardIndex} />
+          <Card key={card.id} card={card} cardIndex={cardIndex} />
         )}
         stackSize={3}
         backgroundColor={"#ffffff"}
         verticalSwipe={false}
         showSecondCard={true}
         animateCardOpacity={false}
+        cardVerticalMargin={0}
+        horizontalSwipe={expandedCardId === null} // Disable swipe when expanded
         onTapCard={(cardIndex) => {
           toggleExpandCard(cardIndex);
-          console.log("Tapped card ID:", cardIndex);
         }}
         onSwipedLeft={(cardIndex) => {
           console.log("Left Swipe", cardIndex);
