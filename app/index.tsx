@@ -1,7 +1,13 @@
-import React, { useState, useReducer, useRef } from "react";
-import { SafeAreaView, FlatList, Dimensions, Animated } from "react-native";
+import React, { useState, useRef } from "react";
+import {
+  SafeAreaView,
+  FlatList,
+  Dimensions,
+  Animated,
+  TouchableWithoutFeedback,
+  Button,
+} from "react-native";
 import Swiper from "react-native-deck-swiper";
-import { useNavigation } from "@react-navigation/native";
 import { styled } from "styled-components/native";
 
 const { height, width } = Dimensions.get("window");
@@ -12,10 +18,9 @@ const data = [
     id: 1,
     image: [
       "https://via.placeholder.com/300",
-      "https://via.placeholder.com/400",
-      "https://via.placeholder.com/500",
+      "https://via.placeholder.com/300",
+      "https://via.placeholder.com/300",
     ],
-
     name: "Leanne Graham",
     description:
       "Full-time Traveller. Occasional Photographer. Part-time Singer/Dancer.",
@@ -25,8 +30,8 @@ const data = [
     id: 2,
     image: [
       "https://via.placeholder.com/300",
-      "https://via.placeholder.com/400",
-      "https://via.placeholder.com/500",
+      "https://via.placeholder.com/300",
+      "https://via.placeholder.com/300",
     ],
     name: "John Doe",
     description: "Mountain Climber. Guitar Player. Tech Enthusiast.",
@@ -54,6 +59,7 @@ const CardContainer = styled(Animated.View)`
   border-radius: 30px;
   background-color: #f7f7f7;
   align-self: center;
+  margin-bottom: 10px;
 `;
 
 const CardImage = styled(Animated.Image)`
@@ -76,17 +82,58 @@ const CardDescription = styled.Text`
   color: #555;
 `;
 
-const CardExtraDetails = styled.Text`
-  font-size: 16px;
-  color: #333;
-  margin-top: 10px;
-`;
+const Card = ({ card, cardIndex, onPress }) => {
+  return (
+    <TouchableWithoutFeedback onPress={onPress}>
+      <CardContainer style={getCardStyle(cardIndex)}>
+        <CardImage source={{ uri: card.image[0] }} />
+        <CardDetails>
+          <CardTitle>{card.name}</CardTitle>
+          <CardDescription>{card.description}</CardDescription>
+        </CardDetails>
+      </CardContainer>
+    </TouchableWithoutFeedback>
+  );
+};
 
-//1.useRef
-//1.
+const getCardStyle = (cardIndex) => {
+  const animatedScale = new Animated.Value(1);
+  const animatedWidth = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [width * 0.88, width],
+  });
+
+  return {
+    width: animatedWidth,
+    transform: [{ scale: animatedScale }],
+  };
+};
+
+const ImageList = ({ cardIndex, onBackPress }) => {
+  const selectedCard = data[cardIndex];
+  return (
+    <>
+      <FlatList
+        data={selectedCard.image}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <CardImage
+            source={{ uri: item }}
+            style={{
+              width: width,
+              height: 350,
+            }}
+          />
+        )}
+      />
+      <Button title="Wróć do kart" onPress={onBackPress} />
+    </>
+  );
+};
+
 const cardSwiper = () => {
-  const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-  const [animationComplete, setAnimationComplete] = useState(false); // Track animation completion
+  const [expandedCardId, setExpandedCardId] = useState<number | null>(null); // Do śledzenia rozszerzonej karty
+  const [animationComplete, setAnimationComplete] = useState(false); // Śledzenie zakończenia animacji
   const animations = useRef(
     data.map(() => ({
       scale: new Animated.Value(0.75),
@@ -97,10 +144,6 @@ const cardSwiper = () => {
   const toggleExpandCard = (cardIndex: number) => {
     const selectedCardId = data[cardIndex].id;
     const isExpanded = expandedCardId === selectedCardId;
-
-    console.log("Currently expandedCardId:", expandedCardId);
-    console.log("Selected Card ID:", selectedCardId);
-    console.log("Is Expanded:", isExpanded);
 
     Animated.parallel([
       Animated.timing(animations[cardIndex].scale, {
@@ -114,7 +157,6 @@ const cardSwiper = () => {
         useNativeDriver: false,
       }),
     ]).start(() => {
-      // Dopiero po zakończeniu animacji zmieniamy stan
       if (isExpanded) {
         setExpandedCardId(null);
       } else {
@@ -123,103 +165,31 @@ const cardSwiper = () => {
     });
   };
 
-  const getCardStyle = (cardIndex: number) => {
-    const numberOfImages = data[cardIndex].image.length;
-    const imageHeight = 350;
-    const totalHeight = numberOfImages * imageHeight;
-
-    const animatedHeight = animations[cardIndex].scale.interpolate({
-      inputRange: [0.75, 1],
-      outputRange: [height * 0.75, totalHeight], // sprawdz dodatkowe +200
-    });
-
-    const animatedWidth = animations[cardIndex].scale.interpolate({
-      inputRange: [0.75, 1],
-      outputRange: [width * 0.88, width],
-    });
-
-    return {
-      height: animatedHeight,
-      width: animatedWidth,
-      borderRadius: animations[cardIndex].borderRadius,
-      marginVertical: animations[cardIndex].scale.interpolate({
-        inputRange: [0.75, 1],
-        outputRange: [60, 0],
-      }),
-    };
-  };
-
-  const Card = ({ card, cardIndex }) => {
-    const isExpanded = expandedCardId === card.id;
-
-    console.log(`Card ${card.id} is ${isExpanded ? "expanded" : "collapsed"}`);
-    console.log("Current expandedCardId:", expandedCardId);
-
-    return (
-      <CardContainer style={getCardStyle(cardIndex)}>
-        {isExpanded ? (
-          <>
-            <FlatList
-              data={card.image}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <CardImage
-                  source={{ uri: item }}
-                  style={{
-                    borderTopLeftRadius: animations[cardIndex].borderRadius,
-                    borderTopRightRadius: animations[cardIndex].borderRadius,
-                  }}
-                />
-              )}
-              ListHeaderComponent={
-                <CardDetails>
-                  <CardTitle>{card.name}</CardTitle>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardDetails>
-              }
-            />
-          </>
-        ) : (
-          <CardImage
-            source={{ uri: card.image[0] }}
-            style={{
-              borderTopLeftRadius: animations[cardIndex].borderRadius,
-              borderTopRightRadius: animations[cardIndex].borderRadius,
-            }}
-          />
-        )}
-        <CardDetails>
-          <CardTitle>{card.name}</CardTitle>
-          <CardDescription>{card.description}</CardDescription>
-        </CardDetails>
-      </CardContainer>
-    );
-  };
-
   return (
     <MainContainer>
-      <Swiper
-        cards={data}
-        renderCard={(card, cardIndex) => (
-          <Card key={card.id} card={card} cardIndex={cardIndex} />
-        )}
-        stackSize={3}
-        backgroundColor={"#ffffff"}
-        verticalSwipe={false}
-        showSecondCard={true}
-        animateCardOpacity={false}
-        cardVerticalMargin={0}
-        horizontalSwipe={expandedCardId === null} // Disable swipe when expanded
-        onTapCard={(cardIndex) => {
-          toggleExpandCard(cardIndex);
-        }}
-        onSwipedLeft={(cardIndex) => {
-          console.log("Left Swipe", cardIndex);
-        }}
-        onSwipedRight={(cardIndex) => {
-          console.log("Right Swipe", cardIndex);
-        }}
-      />
+      {expandedCardId !== null ? (
+        <ImageList
+          cardIndex={expandedCardId - 1}
+          onBackPress={() => setExpandedCardId(null)}
+        />
+      ) : (
+        <Swiper
+          cards={data}
+          renderCard={(card, cardIndex) => (
+            <Card
+              key={card.id}
+              card={card}
+              cardIndex={cardIndex}
+              onPress={() => toggleExpandCard(cardIndex)}
+            />
+          )}
+          stackSize={3}
+          backgroundColor={"#ffffff"}
+          verticalSwipe={false}
+          horizontalSwipe={expandedCardId === null}
+          onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
+        />
+      )}
     </MainContainer>
   );
 };
