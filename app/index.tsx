@@ -6,6 +6,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Button,
+  Text,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
@@ -50,16 +51,26 @@ const data = [
   },
 ];
 
+const StyledText = styled.Text`
+  color: red;
+  text-align: center;
+  font-size: large;
+  font-weight: bold;
+  margin-top: 200px;
+  margin-bottom: 60px;
+`;
+
 const MainContainer = styled.View`
   flex: 1;
   background-color: #ffffff;
+  justify-content: center;
 `;
 
 const CardContainer = styled(Animated.View)`
-  border-radius: 30px;
-  background-color: #f7f7f7;
+  border-radius: 50px;
+  background-color: #e7dbdb;
   align-self: center;
-  margin-bottom: 10px;
+  margin-top: -100px;
 `;
 
 const CardImage = styled(Animated.Image)`
@@ -82,10 +93,49 @@ const CardDescription = styled.Text`
   color: #555;
 `;
 
-const Card = ({ card, cardIndex, onPress }) => {
+const StyledButton = styled.TouchableOpacity`
+  background-color: #ff6b6b; /* Zmienna kolor przycisku */
+  padding: 10px 20px;
+  border-radius: 25px;
+  align-self: center; /* Umieszczenie przycisku na środku */
+  position: absolute; /* Możliwość umieszczenia w dowolnym miejscu */
+  bottom: 20px; /* Ustawienie przycisku 20px nad dolną krawędzią */
+`;
+
+const StyledButtonText = styled.Text`
+  color: #fff; /* Biały tekst */
+  font-weight: bold;
+  font-size: 16px;
+`;
+
+const getCardStyle = (cardIndex, animations) => {
+  const animatedScale = animations[cardIndex].scale;
+
+  const animatedHeight = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [height * 0.9, height],
+  });
+  const animatedWidth = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [width * 1.1, width],
+  });
+  const animatedRadius = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [30, 1],
+  });
+
+  return {
+    width: animatedWidth,
+    height: animatedHeight,
+    transform: [{ scale: animatedScale }],
+    borderRadius: animatedRadius,
+  };
+};
+
+const Card = ({ card, cardIndex, onPress, animations }) => {
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <CardContainer style={getCardStyle(cardIndex)}>
+      <CardContainer style={getCardStyle(cardIndex, animations)}>
         <CardImage source={{ uri: card.image[0] }} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
@@ -96,44 +146,10 @@ const Card = ({ card, cardIndex, onPress }) => {
   );
 };
 
-const getCardStyle = (cardIndex) => {
-  const animatedScale = new Animated.Value(1);
-  const animatedWidth = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [width * 0.88, width],
-  });
-
-  return {
-    width: animatedWidth,
-    transform: [{ scale: animatedScale }],
-  };
-};
-
-const ImageList = ({ cardIndex, onBackPress }) => {
-  const selectedCard = data[cardIndex];
-  return (
-    <>
-      <FlatList
-        data={selectedCard.image}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <CardImage
-            source={{ uri: item }}
-            style={{
-              width: width,
-              height: 350,
-            }}
-          />
-        )}
-      />
-      <Button title="Wróć do kart" onPress={onBackPress} />
-    </>
-  );
-};
-
 const cardSwiper = () => {
-  const [expandedCardId, setExpandedCardId] = useState<number | null>(null); // Do śledzenia rozszerzonej karty
-  const [animationComplete, setAnimationComplete] = useState(false); // Śledzenie zakończenia animacji
+  const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+  const [visibleCards, setVisibleCards] = useState(data);
+
   const animations = useRef(
     data.map(() => ({
       scale: new Animated.Value(0.75),
@@ -141,8 +157,27 @@ const cardSwiper = () => {
     }))
   ).current;
 
+  const resetAllAnimations = () => {
+    animations.forEach((anim) => {
+      Animated.parallel([
+        Animated.timing(anim.scale, {
+          toValue: 0.75,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(anim.borderRadius, {
+          toValue: 30,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    });
+  };
+
   const toggleExpandCard = (cardIndex: number) => {
-    const selectedCardId = data[cardIndex].id;
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+    const card = visibleCards[cardIndex];
+    const selectedCardId = card.id;
     const isExpanded = expandedCardId === selectedCardId;
 
     Animated.parallel([
@@ -157,38 +192,83 @@ const cardSwiper = () => {
         useNativeDriver: false,
       }),
     ]).start(() => {
-      if (isExpanded) {
-        setExpandedCardId(null);
-      } else {
-        setExpandedCardId(selectedCardId);
-      }
+      setExpandedCardId(isExpanded ? null : selectedCardId);
     });
+  };
+
+  const handleCardSwipe = (cardIndex: number) => {
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+    const cardId = visibleCards[cardIndex].id;
+    setVisibleCards((currentCards) =>
+      currentCards.filter((card) => card.id !== cardId)
+    );
+  };
+
+  const ImageList = ({ cardIndex, onBackPress }) => {
+    const selectedCard = data[cardIndex];
+    return (
+      <>
+        <FlatList
+          data={selectedCard.image}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <CardImage
+              source={{ uri: item }}
+              style={{
+                width: width,
+                height: 350,
+              }}
+            />
+          )}
+        />
+        <StyledButton onPress={onBackPress}>
+          <StyledButtonText>Wróć do kart</StyledButtonText>
+        </StyledButton>
+      </>
+    );
   };
 
   return (
     <MainContainer>
-      {expandedCardId !== null ? (
-        <ImageList
-          cardIndex={expandedCardId - 1}
-          onBackPress={() => setExpandedCardId(null)}
-        />
+      {visibleCards.length > 0 ? (
+        expandedCardId !== null ? (
+          <ImageList
+            cardIndex={expandedCardId - 1}
+            onBackPress={() => {
+              resetAllAnimations();
+              setExpandedCardId(null);
+            }}
+          />
+        ) : (
+          <Swiper
+            key={visibleCards.length}
+            cards={visibleCards}
+            renderCard={(card, cardIndex) => (
+              <Card
+                key={card.id}
+                card={card}
+                cardIndex={cardIndex}
+                animations={animations}
+                onPress={() => toggleExpandCard(cardIndex)}
+              />
+            )}
+            stackSize={3}
+            backgroundColor={"#ffffff"}
+            verticalSwipe={false}
+            horizontalSwipe={expandedCardId === null}
+            onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
+            onSwipedLeft={(cardIndex) => {
+              handleCardSwipe(cardIndex);
+              console.log("Left Swipe", cardIndex);
+            }}
+            onSwipedRight={(cardIndex) => {
+              handleCardSwipe(cardIndex);
+              console.log("Right Swipe", cardIndex);
+            }}
+          />
+        )
       ) : (
-        <Swiper
-          cards={data}
-          renderCard={(card, cardIndex) => (
-            <Card
-              key={card.id}
-              card={card}
-              cardIndex={cardIndex}
-              onPress={() => toggleExpandCard(cardIndex)}
-            />
-          )}
-          stackSize={3}
-          backgroundColor={"#ffffff"}
-          verticalSwipe={false}
-          horizontalSwipe={expandedCardId === null}
-          onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
-        />
+        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
       )}
     </MainContainer>
   );
