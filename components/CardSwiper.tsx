@@ -18,9 +18,9 @@ const data = [
   {
     id: 1,
     image: [
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
+      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
     ],
     name: "Leanne Graham",
     description:
@@ -30,8 +30,8 @@ const data = [
   {
     id: 2,
     image: [
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
+      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
       "https://via.placeholder.com/300",
     ],
     name: "John Doe",
@@ -66,16 +66,18 @@ const MainContainer = styled.View`
   justify-content: center;
 `;
 
+
+
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
   background-color: #e7dbdb;
   align-self: center;
-  margin-top: -100px;
+  margin-top: -50px;
 `;
 
 const CardImage = styled(Animated.Image)`
-  width: 100%;
-  height: 350px;
+  height: 450px;
+   width: 100%;
 `;
 
 const CardDetails = styled.View`
@@ -136,7 +138,7 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
-        <CardImage source={{ uri: card.image[0] }} />
+        <CardImage source={{ uri: card.image[0] }} resizeMode={'stretch'} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
           <CardDescription>{card.description}</CardDescription>
@@ -146,7 +148,7 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
   );
 };
 
-const cardSwiper = () => {
+const CardSwiper = () => {
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -176,7 +178,7 @@ const cardSwiper = () => {
     });
   };
 
-  const expandImage = (imageUri: string) => {
+  const expandImage = (imageUri) => {
     setExpandedImage(imageUri);
     Animated.timing(imageScale, {
       toValue: 1.5,
@@ -195,7 +197,7 @@ const cardSwiper = () => {
     });
   };
 
-  const toggleExpandCard = (cardIndex: number) => {
+  const toggleExpandCard = (cardIndex:number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const card = visibleCards[cardIndex];
     const selectedCardId = card.id;
@@ -217,7 +219,7 @@ const cardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex: number) => {
+  const handleCardSwipe = (cardIndex:number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
     setVisibleCards((currentCards) =>
@@ -264,7 +266,7 @@ const cardSwiper = () => {
               renderItem={({ item }) => (
                 <TouchableWithoutFeedback onPress={() => expandImage(item)}>
                   <CardImage
-                    source={{ uri: item }}
+                    source={{ uri: item }} resizeMode={'stretch'}
                     style={{
                       width: width,
                       height: 350,
@@ -328,4 +330,4 @@ const cardSwiper = () => {
   );
 };
 
-export default cardSwiper;
+export default CardSwiper;

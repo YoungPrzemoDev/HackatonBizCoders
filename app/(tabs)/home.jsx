@@ -1,8 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, ImageBackground, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
+import { View, Text } from 'react-native'
+import React from 'react'
+import CardSwiper from '../../components/CardSwiper';
+import { styled } from "styled-components/native";
 
-export default function Home() {
-  
+const MainContainer = styled.View`
+  flex: 1;
+  background-color: #ffffff;
+  justify-content: center;
+`;
+
+export default function home() {
+  return (
+    <MainContainer>
+      <CardSwiper/>
+    </MainContainer>
+  )
 }
