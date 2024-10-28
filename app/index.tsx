@@ -42,8 +42,8 @@ const data = [
     id: 3,
     image: [
       "https://via.placeholder.com/300",
-      "https://via.placeholder.com/400",
-      "https://via.placeholder.com/500",
+      "https://via.placeholder.com/300",
+      "https://via.placeholder.com/300",
     ],
     name: "Jane Smith",
     description: "Freelance Designer. Love yoga and dogs.",
@@ -94,12 +94,12 @@ const CardDescription = styled.Text`
 `;
 
 const StyledButton = styled.TouchableOpacity`
-  background-color: #ff6b6b; /* Zmienna kolor przycisku */
+  background-color: #ff6b6b;
   padding: 10px 20px;
   border-radius: 25px;
-  align-self: center; /* Umieszczenie przycisku na środku */
-  position: absolute; /* Możliwość umieszczenia w dowolnym miejscu */
-  bottom: 20px; /* Ustawienie przycisku 20px nad dolną krawędzią */
+  align-self: center;
+  position: absolute;
+  bottom: 20px;
 `;
 
 const StyledButtonText = styled.Text`
@@ -149,6 +149,8 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
 const cardSwiper = () => {
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
   const [visibleCards, setVisibleCards] = useState(data);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const imageScale = useRef(new Animated.Value(1)).current;
 
   const animations = useRef(
     data.map(() => ({
@@ -171,6 +173,25 @@ const cardSwiper = () => {
           useNativeDriver: false,
         }),
       ]).start();
+    });
+  };
+
+  const expandImage = (imageUri: string) => {
+    setExpandedImage(imageUri);
+    Animated.timing(imageScale, {
+      toValue: 1.5,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const resetImage = () => {
+    Animated.timing(imageScale, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      setExpandedImage(null);
     });
   };
 
@@ -208,22 +229,55 @@ const cardSwiper = () => {
     const selectedCard = data[cardIndex];
     return (
       <>
-        <FlatList
-          data={selectedCard.image}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <CardImage
-              source={{ uri: item }}
+        {expandedImage ? (
+          <TouchableWithoutFeedback onPress={resetImage}>
+            <Animated.View
               style={{
-                width: width,
-                height: 350,
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.8)",
               }}
+            >
+              <Animated.Image
+                source={{ uri: expandedImage }}
+                style={{
+                  maxWidth: width,
+                  maxHeight: height,
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "contain",
+                  transform: [{ scale: imageScale }],
+                }}
+              />
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        ) : (
+          <>
+            <FlatList
+              data={selectedCard.image}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableWithoutFeedback onPress={() => expandImage(item)}>
+                  <CardImage
+                    source={{ uri: item }}
+                    style={{
+                      width: width,
+                      height: 350,
+                    }}
+                  />
+                </TouchableWithoutFeedback>
+              )}
             />
-          )}
-        />
-        <StyledButton onPress={onBackPress}>
-          <StyledButtonText>Wróć do kart</StyledButtonText>
-        </StyledButton>
+            <StyledButton onPress={onBackPress}>
+              <StyledButtonText>Wróć do kart</StyledButtonText>
+            </StyledButton>
+          </>
+        )}
       </>
     );
   };
