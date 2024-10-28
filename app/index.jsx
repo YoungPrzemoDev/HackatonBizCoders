@@ -8,7 +8,7 @@ export default function Index() {
         flex: 1,
       }}
     >
-      <Redirect href={'/(tabs)/home'}/>
+      <Redirect href={'/Home'}/>
     </View>
   );
 }

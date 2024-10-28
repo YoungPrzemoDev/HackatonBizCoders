@@ -16,10 +16,12 @@ export default function RootLayout() {
         headerShown:false
       }}
       />
-      <Stack.Screen name="login/index"
-      options={{
-        headerShown:false
-      }}/>
+     <Stack.Screen name="Select" options={{ headerShown: false }} />
+    <Stack.Screen name="Stories" options={{ headerShown: false }} />
+    <Stack.Screen name="Login" options={{ headerShown: false }} />
+    <Stack.Screen name="RegisterScientist" options={{ headerShown: false }} />
+    <Stack.Screen name="RegisterBusinessman" options={{ headerShown: false }} />
+    <Stack.Screen name="Home" options={{ headerShown: false }} />
     </Stack>
   );
 }
