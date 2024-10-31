@@ -1,18 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions } from 'react-native';
+import { Dimensions, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
+import { collection, query, where, getDocs } from "firebase/firestore";
 import {
   SafeAreaView,
   TextInput,
   TouchableOpacity,
-} from 'react-native'
-
+} from 'react-native';
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { db } from '@/config/FirebaseConfig';
 
 const screenWidth = Dimensions.get('window').width;
-
-
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -20,6 +20,47 @@ export default function Login() {
     password: '',
   });
 
+  async function handleLogin() {
+    const { email, password } = form;
+
+    if (!email || !password) {
+      Alert.alert("Validation Error", "Please fill in both fields.");
+      return;
+    }
+
+    try {
+      // Step 1: Query Firestore for a document with the specified email
+      const q = query(
+        collection(db, "user"),
+        where("email", "==", email)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Login Error", "Email not found.");
+      } else {
+        // Step 2: Check if the password matches
+        let userFound = false;
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          if (userData.password === password) {
+            userFound = true;
+            Alert.alert("Login Successful", "Welcome back!");
+            router.push('/(tabs)/home');
+          }
+        });
+
+        // If the email was found but password doesn't match
+        if (!userFound) {
+          Alert.alert("Login Error", "Incorrect password.");
+        }
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
+      Alert.alert("Login Error", "An error occurred while logging in.");
+    }
+  }
   return (
     <Container>
       <InnerContainer>
@@ -33,11 +74,11 @@ export default function Login() {
             <Title>
               Sign in to <Title style={{ color: '#4acacd' }}>Binder</Title>
             </Title>
-            <Subtitle>The place where Innovation meets Investmen</Subtitle>
+            <Subtitle>The place where Innovation meets Investment</Subtitle>
           </Header>
 
           <Form>
-            <InputGroup>
+          <InputGroup>
               <InputLabel>Email address</InputLabel>
               <InputControl
                 autoCapitalize="none"
@@ -63,28 +104,27 @@ export default function Login() {
                 value={form.password}
               />
             </InputGroup>
+
             <FormAction>
-              <Button onPress={() => router.push('/(tabs)/home')}>
+              <Button onPress={handleLogin}>
                 <ButtonText>Sign in</ButtonText>
               </Button>
             </FormAction>
             <FormLink>
-              <Link href="/Login">
-              Forgot password?
+              <Link href="/Home">
+                Forgot password?
               </Link>
             </FormLink>
           </Form>
         </KeyboardAwareScrollView>
-        <TouchableOpacity onPress={() => { /*  */ }} 
-        style={{ marginTop: 'auto' }}>
+
+        <TouchableOpacity onPress={() => { }}>
           <FormFooter>
             Don't have an account?
             <SignUpLink>
-              <SignUpLink>
-                <Link href="/Select">
-                  Sign up
-                </Link>
-              </SignUpLink>
+              <Link href="/Select">
+                Sign up
+              </Link>
             </SignUpLink>
           </FormFooter>
         </TouchableOpacity>
@@ -93,6 +133,7 @@ export default function Login() {
   );
 }
 
+// Styled Components
 const Container = styled(SafeAreaView)`
   flex: 1;
   background-color:F0F0F0;
