@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { db } from '@/config/FirebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -29,29 +30,23 @@ export default function Login() {
     }
 
     try {
-      // Step 1: Query Firestore for a document with the specified email
-      const q = query(
-        collection(db, "user"),
-        where("email", "==", email)
-      );
-
+      const q = query(collection(db, "user"), where("email", "==", email));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
         Alert.alert("Login Error", "Email not found.");
       } else {
-        // Step 2: Check if the password matches
         let userFound = false;
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach(async (doc) => {
           const userData = doc.data();
           if (userData.password === password) {
             userFound = true;
+            await AsyncStorage.setItem('userId', doc.id); // Save userId to AsyncStorage
             Alert.alert("Login Successful", "Welcome back!");
             router.push('/(tabs)/home');
           }
         });
 
-        // If the email was found but password doesn't match
         if (!userFound) {
           Alert.alert("Login Error", "Incorrect password.");
         }
@@ -122,7 +117,7 @@ export default function Login() {
           <FormFooter>
             Don't have an account?
             <SignUpLink>
-              <Link href="/Select">
+              <Link href="/Account">
                 Sign up
               </Link>
             </SignUpLink>

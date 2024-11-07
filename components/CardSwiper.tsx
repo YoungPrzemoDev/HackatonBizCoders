@@ -62,15 +62,19 @@ const StyledText = styled.Text`
 //gdy karta znika
 const MainContainer = styled.View`
   flex: 1;
-  background-color: #ffffff;
+  background-color: white;
   justify-content: center;
 `;
 
 
-
+//dol karty
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
-  background-color: #e1bee7;
+      background-color:#ffffff;
+     shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
   align-self: center;
   margin-top: -50px;
   borderColor: #ffffff;
@@ -85,6 +89,7 @@ const CardImage = styled(Animated.Image)`
 
 const CardDetails = styled.View`
   padding: 20px;
+  
 `;
 
 const CardTitle = styled.Text`
@@ -103,7 +108,7 @@ const CardDescription = styled.Text`
 `;
 
 const StyledButton = styled.TouchableOpacity`
-  background-color: #ff6b6b;
+  background-color: #111111;
   padding: 10px 20px;
   border-radius: 25px;
   align-self: center;
@@ -316,7 +321,7 @@ const CardSwiper = () => {
               />
             )}
             stackSize={3}
-            backgroundColor={"#0e0e0e"}
+            backgroundColor={"#eeeff0"}
             verticalSwipe={false}
             horizontalSwipe={expandedCardId === null}
             onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}

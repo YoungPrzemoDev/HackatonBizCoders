@@ -18,6 +18,7 @@ export default function RootLayout() {
       <Stack.Screen name="RegisterScientist" options={{ headerShown: false }} />
       <Stack.Screen name="RegisterBusinessman" options={{ headerShown: false }} />
       <Stack.Screen name="Home" options={{ headerShown: false }} />
+      <Stack.Screen name="Account" options={{ headerShown: false }} />
     </Stack>
   );
 }

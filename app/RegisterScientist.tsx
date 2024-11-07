@@ -1,218 +1,205 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
-import { Link, router } from 'expo-router';
-import { MultiSelect } from 'react-native-element-dropdown';  
-//import { collection } from '@react-native-firebase/firestore';
+import { Dimensions, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { Link } from 'expo-router';
+import { MultiSelect } from 'react-native-element-dropdown';
 import { db } from '../config/FirebaseConfig';
-import { collection, addDoc } from "firebase/firestore"; 
+import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function RegisterSciencist() {
   const [form, setForm] = useState({
-      email: '',
-      login: '',
-      password:'',
-      confirmPassword: '',
-      firstName:'',
-      lastName:'',
-      about: '',
-
+    email: '',
+    login: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    about: '',
   });
 
-    const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
 
+  const data = [
+    { label: 'Biotechnology', value: 'biotech' },
+    { label: 'Artificial Intelligence', value: 'ai' },
+    { label: 'Blockchain', value: 'blockchain' },
+    { label: 'Programming', value: 'programming' },
+    { label: 'Quantum Computing', value: 'quantum' },
+  ];
 
-    const data = [
-        { label: 'Biotechnology', value: 'biotech' },
-        { label: 'Artificial Intelligence', value: 'ai' },
-        { label: 'Blockchain', value: 'blockchain' },
-        { label: 'Programing', value: 'nano' },
-        { label: 'Quantum Computing', value: 'quantum' },
-    ];
+  async function addUserWithIncrement() {
+    try {
+      const counterRef = doc(db, "counters", "userCounter");
+      const counterSnap = await getDoc(counterRef);
 
-    
-async function addUser() {
+      let newId;
+      
+      if (counterSnap.exists()) {
+        // Increment the counter
+        await updateDoc(counterRef, { value: increment(1) });
+        newId = counterSnap.data().value + 1;
+      } else {
+        // Initialize the counter if it doesn't exist
+        await setDoc(counterRef, { value: 1 });
+        newId = 1;
+      }
 
-  try {
+      // Reference to the "user" collection
+      const userRef = collection(db, "user");
+      await setDoc(doc(userRef, newId.toString()), {
+        id: newId,
+        email: form.email,
+        login: form.login,
+        password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        about: form.about,
+        userType: 'Scientist',
+        tags: selected,
+        joinDate: serverTimestamp(), // Add timestamp for join date
+      });
 
-    const userRef = collection(db, "user");
-    const docRef = await addDoc(userRef, {
-      email: form.email,
-      login: form.login,
-      password: form.password,      
-      firstName: form.firstName,
-      lastName: form.lastName,
-      about: form.about,
-      userType: "Scientist",          
-      tags: selected,  
-    });
-    
-    console.log("Document written with ID: ", docRef.id);
-  } catch (e) {
-    console.error("Error adding document: ", e);
+      console.log("Scientist added with ID:", newId);
+      Alert.alert("Success", "Scientist account created!");
+    } catch (e) {
+      console.error("Error adding scientist with incremented ID:", e);
+      Alert.alert("Error", "Failed to create scientist account.");
+    }
   }
-}
 
-    return (
-        <Container>
-            <InnerContainer>
-                <KeyboardAwareScrollView>
-                    <Header>
-                        <HeaderImg
-                            alt="Logo"
-                            resizeMode="contain"
-                            source={require('../assets/images/letter-b.gif')}
-                        />
-                        <Title>
-                            Sign up to <Title style={{ color: '#4acacd' }}>Binder</Title>
-                        </Title>
-                        <Subtitle>The place where Innovation meets Investmen</Subtitle>
-                    </Header>
+  return (
+    <Container>
+      <InnerContainer>
+        <KeyboardAwareScrollView>
+          <Header>
+            <HeaderImg
+              alt="Logo"
+              resizeMode="contain"
+              source={require('../assets/images/letter-b.gif')}
+            />
+            <Title>
+              Sign up to <Title style={{ color: '#4acacd' }}>Binder</Title>
+            </Title>
+            <Subtitle>The place where Innovation meets Investment</Subtitle>
+          </Header>
 
-                    <Form>
-                        {}
-                        <InputRow>
-                            <InputGroupHalf>
-                                <InputLabel>Email address</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    keyboardType="email-address"
-                                    onChangeText={email => setForm({ ...form, email })}
-                                    placeholder="john@example.com"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.email}
-                                />
-                            </InputGroupHalf>
+          <Form>
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>Email address</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  onChangeText={email => setForm({ ...form, email })}
+                  placeholder="john@example.com"
+                  value={form.email}
+                />
+              </InputGroupHalf>
 
-                            <InputGroupHalf>
-                                <InputLabel>Username</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={login => setForm({ ...form, login })}
-                                    placeholder="DanyCaramba"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.login}
-                                />
-                            </InputGroupHalf>
-                        </InputRow>
+              <InputGroupHalf>
+                <InputLabel>Username</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={login => setForm({ ...form, login })}
+                  placeholder="DanyCaramba"
+                  value={form.login}
+                />
+              </InputGroupHalf>
+            </InputRow>
 
-                        <InputRow>
-                            <InputGroupHalf>
-                                <InputLabel>First Name</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={firstName => setForm({ ...form, firstName })}
-                                    placeholder="John"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.firstName}
-                                />
-                            </InputGroupHalf>
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>First Name</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={firstName => setForm({ ...form, firstName })}
+                  placeholder="John"
+                  value={form.firstName}
+                />
+              </InputGroupHalf>
 
-                            <InputGroupHalf>
-                                <InputLabel>Last Name</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={lastName => setForm({ ...form, lastName })}
-                                    placeholder="DanyCaramba"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.lastName}
-                                />
-                            </InputGroupHalf>
-                        </InputRow>
+              <InputGroupHalf>
+                <InputLabel>Last Name</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={lastName => setForm({ ...form, lastName })}
+                  placeholder="Doe"
+                  value={form.lastName}
+                />
+              </InputGroupHalf>
+            </InputRow>
 
-                        <InputRow>
-                            <InputGroupHalf>
-                                <InputLabel>Password</InputLabel>
-                                <InputControl
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={password => setForm({ ...form, password })}
-                                    placeholder="************"
-                                    placeholderTextColor="#6b7280"
-                                    secureTextEntry
-                                    value={form.password}
-                                />
-                            </InputGroupHalf>
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>Password</InputLabel>
+                <InputControl
+                  autoCorrect={false}
+                  secureTextEntry
+                  onChangeText={password => setForm({ ...form, password })}
+                  placeholder="************"
+                  value={form.password}
+                />
+              </InputGroupHalf>
 
-                            <InputGroupHalf>
-                                <InputLabel>Confirm Password</InputLabel>
-                                <InputControl
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={confirmPassword => setForm({ ...form, confirmPassword })}
-                                    placeholder="************"
-                                    placeholderTextColor="#6b7280"
-                                    secureTextEntry
-                                    value={form.confirmPassword}
-                                />
-                            </InputGroupHalf>
-                        </InputRow>
+              <InputGroupHalf>
+                <InputLabel>Confirm Password</InputLabel>
+                <InputControl
+                  autoCorrect={false}
+                  secureTextEntry
+                  onChangeText={confirmPassword => setForm({ ...form, confirmPassword })}
+                  placeholder="************"
+                  value={form.confirmPassword}
+                />
+              </InputGroupHalf>
+            </InputRow>
 
-                        {/* Dropdown list */}
-                        <InputGroup>
-                            <InputLabel>Areas of Interest</InputLabel>
-                            <MultiSelect
-                                style={styles.dropdown}
-                                data={data}
-                                labelField="label"
-                                valueField="value"
-                                placeholder="Select interests"
-                                value={selected}
-                                onChange={(data: React.SetStateAction<string[]>) => {
-                                    setSelected(data); 
-                                }}
-                                selectedStyle={styles.selectedStyle}
-                            />
-                        </InputGroup>
+            <InputGroup>
+              <InputLabel>Areas of Interest</InputLabel>
+              <MultiSelect
+                style={styles.dropdown}
+                data={data}
+                labelField="label"
+                valueField="value"
+                placeholder="Select interests"
+                value={selected}
+                onChange={data => setSelected(data)}
+                selectedStyle={styles.selectedStyle}
+              />
+            </InputGroup>
 
-                        <InputGroup>
-                            <InputLabel>About You</InputLabel>
-                            <TextArea
-                                multiline
-                                numberOfLines={4}
-                                placeholder="Tell us a bit about yourself..."
-                                placeholderTextColor="#6b7280"
-                                onChangeText={about => setForm({ ...form, about })}
-                                value={form.about}
-                            />
-                        </InputGroup>
+            <InputGroup>
+              <InputLabel>About You</InputLabel>
+              <TextArea
+                multiline
+                placeholder="Tell us a bit about yourself..."
+                onChangeText={about => setForm({ ...form, about })}
+                value={form.about}
+              />
+            </InputGroup>
 
+            <FormAction>
+              <Button onPress={addUserWithIncrement}>
+                <ButtonText>Sign up</ButtonText>
+              </Button>
+            </FormAction>
+          </Form>
+        </KeyboardAwareScrollView>
 
-                        {}
-                        <FormAction>
-                            <Button onPress={addUser}>
-                                <ButtonText>Sign up</ButtonText>
-                            </Button>
-                        </FormAction>
-
-                        <FormLink />
-                    </Form>
-                </KeyboardAwareScrollView>
-
-                <TouchableOpacity onPress={() => { }}>
-                    <FormFooter>
-                        You have an account?
-                        <SignUpLink>
-                            <Link href="/Login">
-                                Sign in
-                            </Link>
-                        </SignUpLink>
-                    </FormFooter>
-                </TouchableOpacity>
-            </InnerContainer>
-        </Container>
-    );
+        <TouchableOpacity onPress={() => { }}>
+          <FormFooter>
+            You have an account? <SignUpLink><Link href="/Login">Sign in</Link></SignUpLink>
+          </FormFooter>
+        </TouchableOpacity>
+      </InnerContainer>
+    </Container>
+  );
 }
 
 

@@ -7,7 +7,7 @@ import { MultiSelect } from 'react-native-element-dropdown';  // Import dropdown
 import firebase from '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import { db } from '../config/FirebaseConfig';
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { collection, addDoc } from "firebase/firestore"; 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore"; 
@@ -23,32 +23,50 @@ export default function RegisterSciencist() {
         firstName:'',
         lastName:'',
         about: '',
+        joinDate:'',
 
     });
  
 
 
-async function addUser() {
+    async function addUserWithIncrement() {
+      try {
 
-  try {
+        const counterRef = doc(db, "counters", "userCounter");
+        
 
-    const userRef = collection(db, "user");
-    const docRef = await addDoc(userRef, {
-      email: form.email,
-      login: form.login,
-      password: form.password,      
-      firstName: form.firstName,
-      lastName: form.lastName,
-      about: form.about,
-      userType: "Businessman",          
-
-    });
+        const counterSnap = await getDoc(counterRef);
     
-    console.log("Document written with ID: ", docRef.id);
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
-}
+        let newId;
+    
+        if (counterSnap.exists()) {
+
+          await updateDoc(counterRef, { value: increment(1) });
+          newId = counterSnap.data().value + 1;
+        } else {
+          // If no counter exists, initialize it
+          await setDoc(counterRef, { value: 1 });
+          newId = 1;
+        }
+   
+        const userRef = collection(db, "user");
+        await setDoc(doc(userRef, newId.toString()), {
+          id: newId,
+          email: form.email,
+          login: form.login,
+          password: form.password,  
+          firstName: form.firstName,
+          lastName: form.lastName,
+          about: form.about,
+          userType: 'Businessman',
+          joinDate: serverTimestamp(),
+        });
+    
+        console.log("User added with ID:", newId);
+      } catch (e) {
+        console.error("Error adding user with incremented ID:", e);
+      }
+    }
     
 
     return (
@@ -167,7 +185,7 @@ async function addUser() {
                         </InputGroup>
 
                         <FormAction>
-                            <Button onPress={addUser}>
+                            <Button onPress={addUserWithIncrement}>
                                 <ButtonText>Sign up</ButtonText>
                             </Button>
                         </FormAction>
