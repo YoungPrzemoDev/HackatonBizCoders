@@ -7,7 +7,7 @@ import { MultiSelect } from 'react-native-element-dropdown';  // Import dropdown
 import firebase from '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import { db } from '../config/FirebaseConfig';
-import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, increment, limit, orderBy, query, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { collection, addDoc } from "firebase/firestore"; 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore"; 
@@ -28,33 +28,24 @@ export default function RegisterSciencist() {
     });
  
 
-
     async function addUserWithIncrement() {
       try {
-
-        const counterRef = doc(db, "counters", "userCounter");
-        
-
-        const counterSnap = await getDoc(counterRef);
+        const userRef = collection(db, "businessman");
     
-        let newId;
+        const highestIdQuery = query(userRef, orderBy("id", "desc"), limit(1));
+        const querySnapshot = await getDocs(highestIdQuery);
     
-        if (counterSnap.exists()) {
-
-          await updateDoc(counterRef, { value: increment(1) });
-          newId = counterSnap.data().value + 1;
-        } else {
-          // If no counter exists, initialize it
-          await setDoc(counterRef, { value: 1 });
-          newId = 1;
+        let newId = 1; 
+        if (!querySnapshot.empty) {
+          const highestDoc = querySnapshot.docs[0];
+          newId = highestDoc.data().id + 1; 
         }
-   
-        const userRef = collection(db, "user");
+    
         await setDoc(doc(userRef, newId.toString()), {
           id: newId,
           email: form.email,
           login: form.login,
-          password: form.password,  
+          password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
           about: form.about,

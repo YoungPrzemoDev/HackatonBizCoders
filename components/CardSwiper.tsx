@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   Button,
   Text,
+  View,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
@@ -66,6 +67,14 @@ const MainContainer = styled.View`
   justify-content: center;
 `;
 
+
+const MainContainer2 = styled.View`
+
+  background-color: white;
+  justify-content: center;
+  width:95%;
+  height:95%;
+`;
 
 //dol karty
 const CardContainer = styled(Animated.View)`
@@ -272,21 +281,28 @@ const CardSwiper = () => {
           </TouchableWithoutFeedback>
         ) : (
           <>
-            <FlatList
-              data={selectedCard.image}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableWithoutFeedback onPress={() => expandImage(item)}>
-                  <CardImage
-                    source={{ uri: item }} resizeMode={'stretch'}
-                    style={{
-                      width: width,
-                      height: 350,
-                    }}
-                  />
-                </TouchableWithoutFeedback>
-              )}
-            />
+<FlatList
+  data={selectedCard.image}
+  keyExtractor={(item, index) => index.toString()}
+  renderItem={({ item }) => (
+    <TouchableWithoutFeedback onPress={() => expandImage(item)}>
+      <View
+        style={{
+          width: width,
+          height: 350,
+          backgroundColor: 'black',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <MainContainer2>
+        <Text>dasdas</Text>
+        </MainContainer2>
+       
+      </View>
+    </TouchableWithoutFeedback>
+  )}
+/>
             <StyledButton onPress={onBackPress}>
               <StyledButtonText>Wróć do kart</StyledButtonText>
             </StyledButton>

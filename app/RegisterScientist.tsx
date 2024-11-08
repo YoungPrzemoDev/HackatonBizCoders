@@ -5,7 +5,7 @@ import { Dimensions, SafeAreaView, TextInput, TouchableOpacity, Alert } from 're
 import { Link } from 'expo-router';
 import { MultiSelect } from 'react-native-element-dropdown';
 import { db } from '../config/FirebaseConfig';
-import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, getDocs, limit, orderBy } from "firebase/firestore";
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -30,45 +30,42 @@ export default function RegisterSciencist() {
     { label: 'Quantum Computing', value: 'quantum' },
   ];
 
-  async function addUserWithIncrement() {
-    try {
-      const counterRef = doc(db, "counters", "userCounter");
-      const counterSnap = await getDoc(counterRef);
 
-      let newId;
-      
-      if (counterSnap.exists()) {
-        // Increment the counter
-        await updateDoc(counterRef, { value: increment(1) });
-        newId = counterSnap.data().value + 1;
-      } else {
-        // Initialize the counter if it doesn't exist
-        await setDoc(counterRef, { value: 1 });
-        newId = 1;
-      }
 
-      // Reference to the "user" collection
-      const userRef = collection(db, "user");
-      await setDoc(doc(userRef, newId.toString()), {
-        id: newId,
-        email: form.email,
-        login: form.login,
-        password: form.password,
-        firstName: form.firstName,
-        lastName: form.lastName,
-        about: form.about,
-        userType: 'Scientist',
-        tags: selected,
-        joinDate: serverTimestamp(), // Add timestamp for join date
-      });
+async function addUserWithIncrement(){
+  try {
+    const scientistRef = collection(db, "scientist");
 
-      console.log("Scientist added with ID:", newId);
-      Alert.alert("Success", "Scientist account created!");
-    } catch (e) {
-      console.error("Error adding scientist with incremented ID:", e);
-      Alert.alert("Error", "Failed to create scientist account.");
+  
+    const highestIdQuery = query(scientistRef, orderBy("id", "desc"), limit(1));
+    const querySnapshot = await getDocs(highestIdQuery);
+
+    let newId = 1; 
+    if (!querySnapshot.empty) {
+      const highestDoc = querySnapshot.docs[0];
+      newId = highestDoc.data().id + 1;
     }
+
+    await setDoc(doc(scientistRef, newId.toString()), {
+      id: newId,
+      email: form.email,
+      login: form.login,
+      password: form.password,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      about: form.about,
+      userType: 'Scientist',
+      tags: selected,
+      joinDate: serverTimestamp(), 
+    });
+
+    console.log("Scientist added with ID:", newId);
+    Alert.alert("Success", "Scientist account created!");
+  } catch (e) {
+    console.error("Error adding scientist with incremented ID:", e);
+    Alert.alert("Error", "Failed to create scientist account.");
   }
+}
 
   return (
     <Container>

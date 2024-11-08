@@ -117,7 +117,7 @@ export default function Login() {
           <FormFooter>
             Don't have an account?
             <SignUpLink>
-              <Link href="/Account">
+              <Link href="/Model">
                 Sign up
               </Link>
             </SignUpLink>
