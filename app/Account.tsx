@@ -43,7 +43,7 @@ const Account = () => {
           return;
         }
 
-        const userDocRef = doc(db, "user", userId);
+        const userDocRef = doc(db, "users", userId);
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {

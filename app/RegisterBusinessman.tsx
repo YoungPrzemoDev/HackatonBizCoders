@@ -30,15 +30,16 @@ export default function RegisterSciencist() {
 
     async function addUserWithIncrement() {
       try {
-        const userRef = collection(db, "businessman");
+        const userRef = collection(db, "users");
     
+        // Query to find the document with the highest 'id'
         const highestIdQuery = query(userRef, orderBy("id", "desc"), limit(1));
         const querySnapshot = await getDocs(highestIdQuery);
     
-        let newId = 1; 
+        let newId = 1; // Default to 1 if no documents are found
         if (!querySnapshot.empty) {
           const highestDoc = querySnapshot.docs[0];
-          newId = highestDoc.data().id + 1; 
+          newId = highestDoc.data().id + 1; // Increment the highest 'id'
         }
     
         await setDoc(doc(userRef, newId.toString()), {

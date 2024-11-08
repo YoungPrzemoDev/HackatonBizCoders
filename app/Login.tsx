@@ -30,7 +30,7 @@ export default function Login() {
     }
 
     try {
-      const q = query(collection(db, "user"), where("email", "==", email));
+      const q = query(collection(db, "users"), where("email", "==", email));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
