@@ -16,8 +16,6 @@ import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
 const { height, width } = Dimensions.get("window");
 
-
-
 interface ProjectData {
   name: string;
   description: string;
@@ -63,7 +61,7 @@ const fetchProjectsOutsideComponent = async () => {
         createdAt: docData.createdAt.toDate(),
         userId: docData.userId,
         image: docData.image || [], // Handle the new field
-        matchPercentage: docData.matchPercentage || '', // Handle the new field
+        matchPercentage: docData.matchPercentage || "", // Handle the new field
       });
     });
 
@@ -184,14 +182,12 @@ const RoundButtonContainer = styled.TouchableOpacity`
 `;
 
 const AnimatedText = styled(Animated.Text)`
-  color: #87accb;
-  font-size: 20px;
+  color: #5e9ccc;
+  font-size: 30px;
   font-weight: bold;
   text-align: left;
-  margin-left: 10px;
-  position: absolute;
-  top: 20px;
-  margin-left: 10px;
+  margin-left: 10px; /* Space between button and text */
+  margin-bottom: 40px;
 `;
 
 const getCardStyle = (cardIndex, animations) => {
@@ -218,11 +214,9 @@ const getCardStyle = (cardIndex, animations) => {
   };
 };
 
-const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
-
+const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
@@ -310,7 +304,7 @@ const CardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex:  number) => {
+  const handleCardSwipe = (cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
     setVisibleCards((currentCards) =>
@@ -322,10 +316,6 @@ const CardSwiper = () => {
       console.log("drugie project id:", newId);
       return newId;
     });
-  };
-const [selectedItem, setSelectedItem] = useState(null);
-  const handleSelectItem = (item) => {
-    setSelectedItem(item);
   };
 
   const ImageList = ({ cardIndex, onBackPress }) => {
@@ -394,6 +384,7 @@ const [selectedItem, setSelectedItem] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
 
   const handleRightSwipe = (cardIndex: number) => {
+    resetAnimationsForButtonAndText();
     handleCardSwipe(cardIndex);
     setShowOverlay(true);
     animateButtons();
@@ -405,8 +396,8 @@ const [selectedItem, setSelectedItem] = useState(null);
   };
 
   const [textAnimations, setTextAnimations] = useState([
-    new Animated.Value(-100), // Start off-screen to the left
-    new Animated.Value(-100),
+    new Animated.Value(-width),
+    new Animated.Value(-width),
   ]);
 
   const [buttonAnimations, setButtonAnimations] = useState([
@@ -478,7 +469,6 @@ const [selectedItem, setSelectedItem] = useState(null);
             {showOverlay && (
               <OverlayContainer>
                 <ButtonContainer>
-                  {/* Button 1: Join the group */}
                   <Animated.View
                     style={{
                       flexDirection: "row",
@@ -490,6 +480,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                     <RoundButtonContainer
                       onPress={() => {
                         console.log("Join the group");
+
                         closeOverlay();
                       }}
                     >
@@ -501,7 +492,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                           {
                             translateX: textAnimations[0].interpolate({
                               inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
+                              outputRange: [-width, 0],
                             }),
                           },
                         ],
@@ -511,7 +502,6 @@ const [selectedItem, setSelectedItem] = useState(null);
                     </AnimatedText>
                   </Animated.View>
 
-                  {/* Button 2: Add to favorites */}
                   <Animated.View
                     style={{
                       flexDirection: "row",
@@ -523,6 +513,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                     <RoundButtonContainer
                       onPress={() => {
                         console.log("Add to favorites");
+                        console.log();
                         closeOverlay();
                       }}
                     >
@@ -556,7 +547,6 @@ const [selectedItem, setSelectedItem] = useState(null);
 };
 
 export default CardSwiper;
-function setVisibleCards(projectData: { id: string; }[]) {
+function setVisibleCards(projectData: { id: string }[]) {
   throw new Error("Function not implemented.");
 }
-
