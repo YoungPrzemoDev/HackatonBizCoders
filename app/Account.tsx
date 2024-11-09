@@ -29,13 +29,13 @@ interface UserData {
 }
 
 const Account = () => {
-  const [userData, setUserData] = useState<UserData | null>(null); // Use UserData interface or null
+  const [userData, setUserData] = useState<UserData | null>(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Get the userId from AsyncStorage
+  
         const userId = await AsyncStorage.getItem('userId');
 
         if (!userId) {
@@ -47,7 +47,7 @@ const Account = () => {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData); // Use type assertion here
+          setUserData(userDoc.data() as UserData); 
         } else {
           console.log("No such user!");
         }

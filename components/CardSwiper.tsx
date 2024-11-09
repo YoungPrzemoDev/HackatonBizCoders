@@ -1,4 +1,6 @@
-import React, { useState, useRef } from "react";
+import { db } from "@/config/FirebaseConfig";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView,
   FlatList,
@@ -13,6 +15,9 @@ import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 
 const { height, width } = Dimensions.get("window");
+
+
+
 
 // Statyczne dane dla kart
 const data = [
@@ -130,6 +135,22 @@ const StyledButtonText = styled.Text`
   font-weight: bold;
   font-size: 16px;
 `;
+interface ProjectData {
+  name:string;
+  description:string;
+  id: string;
+  keyPartners: string;
+  keyActivities: string;
+  keyResources: string;
+  valuePropositions: string;
+  customerRelationships: string;
+  channels: string;
+  customerSegments: string;
+  costStructure: string;
+  revenueStreams: string;
+  createdAt: Date;
+  userId: string;
+}
 
 const getCardStyle = (cardIndex, animations) => {
   const animatedScale = animations[cardIndex].scale;
@@ -155,14 +176,61 @@ const getCardStyle = (cardIndex, animations) => {
   };
 };
 
-const Card = ({ card, cardIndex, onPress, animations }) => {
+const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
+
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        // Pobierz referencję do kolekcji 'projects'
+        const querySnapshot = await getDocs(collection(db, "projects"));
+        const projectList: ProjectData[] = [];
+
+        querySnapshot.forEach((doc) => {
+          // Zmapuj dane z Firestore na obiekt typu ProjectData
+          const data = doc.data();
+          projectList.push({
+            name: data.name,
+            description: data.description,
+            id: doc.id, // ID dokumentu
+            keyPartners: data.keyPartners,
+            keyActivities: data.keyActivities,
+            keyResources: data.keyResources,
+            valuePropositions: data.valuePropositions,
+            customerRelationships: data.customerRelationships,
+            channels: data.channels,
+            customerSegments: data.customerSegments,
+            costStructure: data.costStructure,
+            revenueStreams: data.revenueStreams,
+            createdAt: data.createdAt.toDate(), // Zakładam, że `createdAt` jest typem Timestamp z Firestore
+            userId: data.userId,
+          });
+        });
+
+        setProjects(projectList); // Ustawienie stanu z załadowanymi danymi
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+      setLoading(true);
+    };
+
+    fetchProjects(); // Wywołanie funkcji pobierania przy pierwszym renderze
+  }, []);
+
+ 
+  const specificProject = projects[projectId];
+  console.log("pierwsze projectid:", projectId);
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
         <CardImage source={{ uri: card.image[0] }} resizeMode={'stretch'} />
         <CardDetails>
-          <CardTitle>{card.name}</CardTitle>
-          <CardDescription>{card.description}</CardDescription>
+          <CardTitle>{specificProject?.name}</CardTitle>
+          <CardDescription>{specificProject?.description}</CardDescription>
         </CardDetails>
       </CardContainer>
     </TouchableWithoutFeedback>
@@ -170,6 +238,8 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
 };
 
 const CardSwiper = () => {
+
+  const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -240,12 +310,18 @@ const CardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex:number) => {
+  const handleCardSwipe = (cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
+
+    setProjectId((prevId) => {
+      const newId = prevId + 1;
+      console.log("drugie project id:", newId);
+      return newId;
+    });
   };
 
   const ImageList = ({ cardIndex, onBackPress }) => {
@@ -282,8 +358,8 @@ const CardSwiper = () => {
         ) : (
           <>
 <FlatList
-  data={selectedCard.image}
-  keyExtractor={(item, index) => index.toString()}
+  data={visibleCards}
+  keyExtractor={(item) => item.id.toString()}
   renderItem={({ item }) => (
     <TouchableWithoutFeedback onPress={() => expandImage(item)}>
       <View
@@ -294,9 +370,10 @@ const CardSwiper = () => {
           justifyContent: 'center',
           alignItems: 'center',
         }}
+  
       >
         <MainContainer2>
-        <Text>dasdas</Text>
+        <Text>{}</Text>
         </MainContainer2>
        
       </View>
@@ -334,6 +411,7 @@ const CardSwiper = () => {
                 cardIndex={cardIndex}
                 animations={animations}
                 onPress={() => toggleExpandCard(cardIndex)}
+                projectId={projectId}
               />
             )}
             stackSize={3}
@@ -359,3 +437,7 @@ const CardSwiper = () => {
 };
 
 export default CardSwiper;
+function setVisibleCards(projectData: { id: string; }[]) {
+  throw new Error("Function not implemented.");
+}
+

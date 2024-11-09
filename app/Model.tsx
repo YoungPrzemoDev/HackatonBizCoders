@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from '../config/FirebaseConfig';
+import { collection, query, orderBy, limit, getDocs, setDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 const BusinessCanvasScreen = () => {
   const [canvas, setCanvas] = useState({
+    name: '',
+    description: '',
     keyPartners: '',
     keyActivities: '',
     keyResources: '',
@@ -13,12 +18,66 @@ const BusinessCanvasScreen = () => {
     costStructure: '',
     revenueStreams: '',
   });
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId) {
+          setUserId(storedUserId);
+          console.log('Retrieved userId:', storedUserId);
+        } else {
+          console.log('No userId found in AsyncStorage');
+        }
+      } catch (error) {
+        console.error('Error fetching userId from AsyncStorage:', error);
+      }
+    };
+
+    fetchUserId();
+  }, []);
 
   const handleInputChange = (section: string, value: string) => {
     setCanvas({ ...canvas, [section]: value });
   };
 
+  const saveProjectWithHighestId = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID not found. Please log in again.');
+      return;
+    }
+
+    try {
+      const projectRef = collection(db, 'projects');
+      const projectQuery = query(projectRef, orderBy('id', 'desc'), limit(1));
+      const projectSnap = await getDocs(projectQuery);
+
+      let newId = 1; // Default to 1 if no projects exist
+
+      if (!projectSnap.empty) {
+        const highestProject = projectSnap.docs[0].data();
+        newId = highestProject.id + 1; // Increment the highest id by 1
+      }
+
+      await setDoc(doc(projectRef, newId.toString()), {
+        id: newId,
+        ...canvas,
+        userId: userId,
+        createdAt: serverTimestamp(),
+      });
+
+      Alert.alert('Success', 'Project saved successfully!');
+      console.log('Project saved with ID:', newId);
+    } catch (error) {
+      console.error('Error saving project:', error);
+      Alert.alert('Error', 'Failed to save the project.');
+    }
+  };
+
   const sections = [
+    { label: 'Name', key: 'name' },
+    { label: 'Description', key: 'description' },
     { label: 'Key Partners', key: 'keyPartners' },
     { label: 'Key Activities', key: 'keyActivities' },
     { label: 'Key Resources', key: 'keyResources' },
@@ -40,13 +99,13 @@ const BusinessCanvasScreen = () => {
             style={styles.input}
             multiline
             placeholder={`Enter details for ${section.label}`}
-         //f   value={canvas[section.key]}
+            value={canvas[section.key as keyof typeof canvas]} // Dodaje wsparcie dla nowych pól
             onChangeText={(value) => handleInputChange(section.key, value)}
           />
         </View>
       ))}
-      <TouchableOpacity style={styles.saveButton} onPress={() => console.log('Canvas Saved:', canvas)}>
-        <Text style={styles.saveButtonText}>Save Canvas</Text>
+      <TouchableOpacity style={styles.saveButton} onPress={saveProjectWithHighestId}>
+        <Text style={styles.saveButtonText}>Save Project</Text>
       </TouchableOpacity>
     </ScrollView>
   );
