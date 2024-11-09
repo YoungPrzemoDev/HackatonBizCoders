@@ -18,44 +18,64 @@ const { height, width } = Dimensions.get("window");
 
 
 
+interface ProjectData {
+  name: string;
+  description: string;
+  id: string;
+  keyPartners: string;
+  keyActivities: string;
+  keyResources: string;
+  valuePropositions: string;
+  customerRelationships: string;
+  channels: string;
+  customerSegments: string;
+  costStructure: string;
+  revenueStreams: string;
+  createdAt: Date;
+  userId: string;
+  image: string[]; // New field
+  matchPercentage: string; // New field
+}
 
-// Statyczne dane dla kart
-const data = [
-  {
-    id: 1,
-    image: [
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-    ],
-    name: "Leanne Graham",
-    description:
-      "Full-time Traveller. Occasional Photographer. Part-time Singer/Dancer.",
-    matchPercentage: "78%",
-  },
-  {
-    id: 2,
-    image: [
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      "https://via.placeholder.com/300",
-    ],
-    name: "John Doe",
-    description: "Mountain Climber. Guitar Player. Tech Enthusiast.",
-    matchPercentage: "85%",
-  },
-  {
-    id: 3,
-    image: [
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
-    ],
-    name: "Jane Smith",
-    description: "Freelance Designer. Love yoga and dogs.",
-    matchPercentage: "90%",
-  },
-];
+let data: ProjectData[] = [];
+let dataLoaded = false;
+
+const fetchProjectsOutsideComponent = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects"));
+    const projectList: ProjectData[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const docData = doc.data();
+      projectList.push({
+        name: docData.name,
+        description: docData.description,
+        id: doc.id,
+        keyPartners: docData.keyPartners,
+        keyActivities: docData.keyActivities,
+        keyResources: docData.keyResources,
+        valuePropositions: docData.valuePropositions,
+        customerRelationships: docData.customerRelationships,
+        channels: docData.channels,
+        customerSegments: docData.customerSegments,
+        costStructure: docData.costStructure,
+        revenueStreams: docData.revenueStreams,
+        createdAt: docData.createdAt.toDate(),
+        userId: docData.userId,
+        image: docData.image || [], // Handle the new field
+        matchPercentage: docData.matchPercentage || '', // Handle the new field
+      });
+    });
+
+    data = projectList; // Assign fetched data to the global variable
+    console.log("Dane pobrane z data:", data);
+    dataLoaded = true;
+  } catch (error) {
+    console.error("Error fetching projects outside component:", error);
+  }
+};
+
+fetchProjectsOutsideComponent();
 
 const StyledText = styled.Text`
   color: red;
@@ -135,22 +155,6 @@ const StyledButtonText = styled.Text`
   font-weight: bold;
   font-size: 16px;
 `;
-interface ProjectData {
-  name:string;
-  description:string;
-  id: string;
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
-  createdAt: Date;
-  userId: string;
-}
 
 const getCardStyle = (cardIndex, animations) => {
   const animatedScale = animations[cardIndex].scale;
@@ -181,56 +185,14 @@ const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [projects, setProjects] = useState<ProjectData[]>([]);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        // Pobierz referencję do kolekcji 'projects'
-        const querySnapshot = await getDocs(collection(db, "projects"));
-        const projectList: ProjectData[] = [];
-
-        querySnapshot.forEach((doc) => {
-          // Zmapuj dane z Firestore na obiekt typu ProjectData
-          const data = doc.data();
-          projectList.push({
-            name: data.name,
-            description: data.description,
-            id: doc.id, // ID dokumentu
-            keyPartners: data.keyPartners,
-            keyActivities: data.keyActivities,
-            keyResources: data.keyResources,
-            valuePropositions: data.valuePropositions,
-            customerRelationships: data.customerRelationships,
-            channels: data.channels,
-            customerSegments: data.customerSegments,
-            costStructure: data.costStructure,
-            revenueStreams: data.revenueStreams,
-            createdAt: data.createdAt.toDate(), // Zakładam, że `createdAt` jest typem Timestamp z Firestore
-            userId: data.userId,
-          });
-        });
-
-        setProjects(projectList); // Ustawienie stanu z załadowanymi danymi
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-      setLoading(true);
-    };
-
-    fetchProjects(); // Wywołanie funkcji pobierania przy pierwszym renderze
-  }, []);
-
- 
-  const specificProject = projects[projectId];
-  console.log("pierwsze projectid:", projectId);
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
         <CardImage source={{ uri: card.image[0] }} resizeMode={'stretch'} />
         <CardDetails>
-          <CardTitle>{specificProject?.name}</CardTitle>
-          <CardDescription>{specificProject?.description}</CardDescription>
+          <CardTitle>{card.name}</CardTitle>
+          <CardDescription>{card.description}</CardDescription>
         </CardDetails>
       </CardContainer>
     </TouchableWithoutFeedback>
@@ -238,9 +200,9 @@ const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
 };
 
 const CardSwiper = () => {
-
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+  console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
@@ -323,6 +285,10 @@ const CardSwiper = () => {
       return newId;
     });
   };
+const [selectedItem, setSelectedItem] = useState(null);
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
+  };
 
   const ImageList = ({ cardIndex, onBackPress }) => {
     const selectedCard = data[cardIndex];
@@ -358,8 +324,8 @@ const CardSwiper = () => {
         ) : (
           <>
 <FlatList
-  data={visibleCards}
-  keyExtractor={(item) => item.id.toString()}
+  data={selectedCard.image}
+  keyExtractor={(item, index) => index.toString()}
   renderItem={({ item }) => (
     <TouchableWithoutFeedback onPress={() => expandImage(item)}>
       <View
@@ -370,10 +336,9 @@ const CardSwiper = () => {
           justifyContent: 'center',
           alignItems: 'center',
         }}
-  
       >
         <MainContainer2>
-        <Text>{}</Text>
+        <Text>dasdas</Text>
         </MainContainer2>
        
       </View>

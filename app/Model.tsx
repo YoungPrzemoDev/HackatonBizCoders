@@ -47,26 +47,32 @@ const BusinessCanvasScreen = () => {
       Alert.alert('Error', 'User ID not found. Please log in again.');
       return;
     }
-
+  
     try {
       const projectRef = collection(db, 'projects');
       const projectQuery = query(projectRef, orderBy('id', 'desc'), limit(1));
       const projectSnap = await getDocs(projectQuery);
-
+  
       let newId = 1; // Default to 1 if no projects exist
-
+  
       if (!projectSnap.empty) {
         const highestProject = projectSnap.docs[0].data();
         newId = highestProject.id + 1; // Increment the highest id by 1
       }
-
+  
       await setDoc(doc(projectRef, newId.toString()), {
         id: newId,
         ...canvas,
         userId: userId,
         createdAt: serverTimestamp(),
+        image: [
+          'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+          'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+          'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+        ],
+        matchPercentage: '78%',
       });
-
+  
       Alert.alert('Success', 'Project saved successfully!');
       console.log('Project saved with ID:', newId);
     } catch (error) {
@@ -74,6 +80,7 @@ const BusinessCanvasScreen = () => {
       Alert.alert('Error', 'Failed to save the project.');
     }
   };
+  
 
   const sections = [
     { label: 'Name', key: 'name' },
