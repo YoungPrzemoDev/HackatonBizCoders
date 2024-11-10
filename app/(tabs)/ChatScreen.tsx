@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, RefreshControl } from 'react-native'
+import { View, Text, ScrollView, Image, RefreshControl, TouchableOpacity } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { db } from '../../config/FirebaseConfig'
 import { collection, getDocs, query, where, DocumentData } from 'firebase/firestore';
@@ -11,7 +11,14 @@ const mockedUserId = "1";
 const ChatScreen: React.FC = () => {
   const [userChats, setUserChats] = useState<ChatWithParticipants[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  
+  const router = useRouter();
+
+  const navigateToChatDetail = (chatId: string, chatName: string) => {
+    router.push({
+      pathname: '../ChatDetails',
+      params: {chatId, chatName},
+    });
+  }
 
   const fetchUserChats = async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -66,7 +73,7 @@ const ChatScreen: React.FC = () => {
       <Text className='mt-20 text-2xl font-bold text-slate-200 mx-auto'>Konwersacje projektowe</Text>
       <View className='mt-5 py-4 px-2 rounded-l space-y-4'>
         {userChats.map(chat => (
-          <View key={chat.id} className='bg-zinc-700 p-3 rounded-2xl shadow'>
+          <TouchableOpacity key={chat.id} className='bg-zinc-700 p-3 rounded-2xl shadow' onPress={() => navigateToChatDetail(chat.id, chat.name)}>
             <Text className='text-xl font-semibold text-slate-200'>{chat.name}</Text>
             <View className='flex-row mt-1 items-start'>
               <View className='flex-row flex-wrap items-center'>
@@ -89,7 +96,7 @@ const ChatScreen: React.FC = () => {
                   ))}
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>    
     </ScrollView>
