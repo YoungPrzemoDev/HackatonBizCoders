@@ -1,5 +1,13 @@
 import { db } from "@/config/FirebaseConfig";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView,
@@ -14,6 +22,8 @@ import {
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const { height, width } = Dimensions.get("window");
 
 interface ProjectData {
@@ -66,7 +76,7 @@ const fetchProjectsOutsideComponent = async () => {
     });
 
     data = projectList; // Assign fetched data to the global variable
-    console.log("Dane pobrane z data:", data);
+    //console.log("Dane pobrane z data:", data);
     dataLoaded = true;
   } catch (error) {
     console.error("Error fetching projects outside component:", error);
@@ -155,7 +165,7 @@ const OverlayContainer = styled.View`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   justify-content: center;
 `;
 
@@ -177,7 +187,7 @@ const RoundButtonContainer = styled.TouchableOpacity`
   border-color: #265676;
   justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
   position: relative;
 `;
 
@@ -186,9 +196,52 @@ const AnimatedText = styled(Animated.Text)`
   font-size: 30px;
   font-weight: bold;
   text-align: left;
-  margin-left: 10px; /* Space between button and text */
-  margin-bottom: 40px;
+  margin-left: 10px;
+  margin-bottom: 60px;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
 `;
+
+export const joinGroup = async (projectId: string, userId: string) => {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    await updateDoc(projectRef, {
+      members: arrayUnion(userId),
+    });
+    console.log(`User ${userId} added to project ${projectId}`);
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+const fetchCurrentUserId = async () => {
+  const auth = getAuth();
+  const currentUserId = await AsyncStorage.getItem("userId");
+  console.log("Fetched currentUserId:", currentUserId);
+  return currentUserId || auth.currentUser?.uid || null;
+};
+
+const handleJoinGroup = async (cardId: string) => {
+  const currentUserId = await fetchCurrentUserId();
+  console.log("currentUserId:", currentUserId);
+  console.log("cardId:", cardId);
+
+  if (!currentUserId || !cardId) {
+    console.error("Missing user ID or card ID");
+    return;
+  }
+
+  const success = await joinGroup(cardId, currentUserId);
+  if (success) {
+    console.log("User successfully joined the group!");
+  } else {
+    console.error("Failed to join the group");
+  }
+};
 
 const getCardStyle = (cardIndex, animations) => {
   const animatedScale = animations[cardIndex].scale;
@@ -234,7 +287,7 @@ const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
 const CardSwiper = () => {
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-  console.log("Dane przed przypisaniem:", data);
+  //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
@@ -318,7 +371,13 @@ const CardSwiper = () => {
     });
   };
 
-  const ImageList = ({ cardIndex, onBackPress }) => {
+  const ImageList = ({
+    cardIndex,
+    onBackPress,
+  }: {
+    cardIndex: number;
+    onBackPress: () => void;
+  }) => {
     const selectedCard = data[cardIndex];
     return (
       <>
@@ -381,10 +440,15 @@ const CardSwiper = () => {
     );
   };
 
+  const [currentCardID, setCurrentCardID] = useState("");
   const [showOverlay, setShowOverlay] = useState(false);
 
   const handleRightSwipe = (cardIndex: number) => {
-    resetAnimationsForButtonAndText();
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+
+    const projectId = visibleCards[cardIndex].id;
+    setCurrentCardID(projectId);
+
     handleCardSwipe(cardIndex);
     setShowOverlay(true);
     animateButtons();
@@ -410,7 +474,7 @@ const CardSwiper = () => {
     buttonAnimations.forEach((anim) => anim.setValue(width));
 
     // Reset text opacity and position
-    textAnimations.forEach((anim) => anim.setValue(0));
+    textAnimations.forEach((anim) => anim.setValue(-width));
   };
 
   const animateButtons = () => {
@@ -423,7 +487,7 @@ const CardSwiper = () => {
       }).start(() => {
         Animated.timing(textAnimations[index], {
           toValue: 1,
-          duration: 500,
+          duration: 200,
           useNativeDriver: true,
         }).start();
       });
@@ -480,7 +544,8 @@ const CardSwiper = () => {
                     <RoundButtonContainer
                       onPress={() => {
                         console.log("Join the group");
-
+                        console.log(currentCardID);
+                        handleJoinGroup(currentCardID);
                         closeOverlay();
                       }}
                     >
@@ -513,7 +578,7 @@ const CardSwiper = () => {
                     <RoundButtonContainer
                       onPress={() => {
                         console.log("Add to favorites");
-                        console.log();
+                        console.log(currentCardID);
                         closeOverlay();
                       }}
                     >
@@ -525,7 +590,7 @@ const CardSwiper = () => {
                           {
                             translateX: textAnimations[1].interpolate({
                               inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
+                              outputRange: [-width, 0],
                             }),
                           },
                         ],
