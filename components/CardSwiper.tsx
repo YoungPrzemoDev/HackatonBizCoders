@@ -1,4 +1,6 @@
-import React, { useState, useRef } from "react";
+import { db } from "@/config/FirebaseConfig";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView,
   FlatList,
@@ -8,49 +10,74 @@ import {
   Button,
   Text,
   View,
+  ScrollView,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
-
+import Icon from "react-native-vector-icons/Ionicons";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 const { height, width } = Dimensions.get("window");
 
-// Statyczne dane dla kart
-const data = [
-  {
-    id: 1,
-    image: [
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-    ],
-    name: "Leanne Graham",
-    description:
-      "Full-time Traveller. Occasional Photographer. Part-time Singer/Dancer.",
-    matchPercentage: "78%",
-  },
-  {
-    id: 2,
-    image: [
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
-      "https://via.placeholder.com/300",
-    ],
-    name: "John Doe",
-    description: "Mountain Climber. Guitar Player. Tech Enthusiast.",
-    matchPercentage: "85%",
-  },
-  {
-    id: 3,
-    image: [
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
-      "https://via.placeholder.com/300",
-    ],
-    name: "Jane Smith",
-    description: "Freelance Designer. Love yoga and dogs.",
-    matchPercentage: "90%",
-  },
-];
+
+
+interface ProjectData {
+  name: string;
+  description: string;
+  id: string;
+  keyPartners: string;
+  keyActivities: string;
+  keyResources: string;
+  valuePropositions: string;
+  customerRelationships: string;
+  channels: string;
+  customerSegments: string;
+  costStructure: string;
+  revenueStreams: string;
+  createdAt: Date;
+  userId: string;
+  image: string; // New field
+  matchPercentage: string; // New field
+}
+
+let data: ProjectData[] = [];
+let dataLoaded = false;
+
+const fetchProjectsOutsideComponent = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects"));
+    const projectList: ProjectData[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const docData = doc.data();
+      projectList.push({
+        name: docData.name,
+        description: docData.description,
+        id: doc.id,
+        keyPartners: docData.keyPartners,
+        keyActivities: docData.keyActivities,
+        keyResources: docData.keyResources,
+        valuePropositions: docData.valuePropositions,
+        customerRelationships: docData.customerRelationships,
+        channels: docData.channels,
+        customerSegments: docData.customerSegments,
+        costStructure: docData.costStructure,
+        revenueStreams: docData.revenueStreams,
+        createdAt: docData.createdAt.toDate(),
+        userId: docData.userId,
+        image: docData.image , // Handle the new field
+        matchPercentage: docData.matchPercentage || '', // Handle the new field
+      });
+    });
+
+    data = projectList; // Assign fetched data to the global variable
+   // console.log("Dane pobrane z data:", data);
+    dataLoaded = true;
+  } catch (error) {
+    console.error("Error fetching projects outside component:", error);
+  }
+};
+
+fetchProjectsOutsideComponent();
 
 const StyledText = styled.Text`
   color: red;
@@ -64,41 +91,102 @@ const StyledText = styled.Text`
 const MainContainer = styled.View`
   flex: 1;
   background-color: white;
-  justify-content: center;
+ justify-content: center;
+`;
+
+const MainContainer2 = styled.View` 
+ flex:1;
+ background-color: #eeeff0;
+ align-items: center;
+ justify-content: center;
+`;
+
+const TopContainer = styled.View` 
+ background-color: #eeeff0;
+ align-items: center;
+ justify-content: center;
+`;
+const StyledScrollView = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingBottom: 80,
+    paddingTop: 35,
+  
+  },
+}))`
+  flex: 1;
+background-color: #eeeff0;
+
+
 `;
 
 
-const MainContainer2 = styled.View`
+const InfoContainer = styled.View`
+justify-content: center;
+ align-items: center;
+width:90%;
+padding:20px;
+background-color: red;
+background-color: #ffffff;
+shadow-color: #000;
+shadow-offset: 0px 2px;
+shadow-opacity: 0.25;
+shadow-radius: 3.84px;
+ border-radius:20px;
+  margin-top:15px;
+`
 
-  background-color: white;
-  justify-content: center;
-  width:95%;
-  height:95%;
+const NameText = styled.Text`
+  font-size: 38px;
+  font-weight: bold;
+  text-align: center;
+  margin-top:60px;
+  color:black;
 `;
 
+
+const DescriptionText = styled.Text`
+  font-size: 28spx;
+  text-align: center;
+  margin-bottom: 5px;
+`;
+
+const TitleText = styled.Text`
+ font-weight: bold;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: 5px;
+  color:black;
+`;
+
+const SectionText = styled.Text`
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 5px;
+`;
 //dol karty
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
-      background-color:#ffffff;
-     shadow-color: #000;
+  background-color: #ffffff;
+  shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   align-self: center;
   margin-top: -50px;
-  borderColor: #ffffff;
+  bordercolor: #ffffff;
 `;
 
 const CardImage = styled(Animated.Image)`
   height: 450px;
-   width: 100%;
-    border-top-left-radius: 25px;   
+  width: 100%;
+  border-top-left-radius: 25px;
   border-top-right-radius: 25px;
 `;
 
 const CardDetails = styled.View`
   padding: 20px;
-  
 `;
 
 const CardTitle = styled.Text`
@@ -108,10 +196,8 @@ const CardTitle = styled.Text`
   margin-bottom: 5px;
 `;
 
-
-
 const CardDescription = styled.Text`
-   font-size: 24px;
+  font-size: 24px;
   text-align: center;
   color: #6b7280;
 `;
@@ -129,6 +215,49 @@ const StyledButtonText = styled.Text`
   color: #fff; /* Biały tekst */
   font-weight: bold;
   font-size: 16px;
+`;
+
+const OverlayContainer = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+`;
+
+const ButtonContainer = styled.View`
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding-left: 20px;
+  padding-top: 10px;
+`;
+
+const RoundButtonContainer = styled.TouchableOpacity`
+  background-color: #3498db;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #265676;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+  position: relative;
+`;
+
+const AnimatedText = styled(Animated.Text)`
+  color: #87accb;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: left;
+  margin-left: 10px;
+  position: absolute;
+  top: 20px;
+  margin-left: 10px;
 `;
 
 const getCardStyle = (cardIndex, animations) => {
@@ -155,11 +284,16 @@ const getCardStyle = (cardIndex, animations) => {
   };
 };
 
-const Card = ({ card, cardIndex, onPress, animations }) => {
+const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
+
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
-        <CardImage source={{ uri: card.image[0] }} resizeMode={'stretch'} />
+        <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
           <CardDescription>{card.description}</CardDescription>
@@ -170,7 +304,9 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
 };
 
 const CardSwiper = () => {
+  const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+  //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
@@ -218,7 +354,7 @@ const CardSwiper = () => {
     });
   };
 
-  const toggleExpandCard = (cardIndex:number) => {
+  const toggleExpandCard = (cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const card = visibleCards[cardIndex];
     const selectedCardId = card.id;
@@ -240,12 +376,22 @@ const CardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex:number) => {
+  const handleCardSwipe = (cardIndex:  number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
+
+    setProjectId((prevId) => {
+      const newId = prevId + 1;
+     // console.log("drugie project id:", newId);
+      return newId;
+    });
+  };
+const [selectedItem, setSelectedItem] = useState(null);
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
   };
 
   const ImageList = ({ cardIndex, onBackPress }) => {
@@ -281,35 +427,116 @@ const CardSwiper = () => {
           </TouchableWithoutFeedback>
         ) : (
           <>
-<FlatList
-  data={selectedCard.image}
-  keyExtractor={(item, index) => index.toString()}
-  renderItem={({ item }) => (
-    <TouchableWithoutFeedback onPress={() => expandImage(item)}>
-      <View
-        style={{
-          width: width,
-          height: 350,
-          backgroundColor: 'black',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <MainContainer2>
-        <Text>dasdas</Text>
-        </MainContainer2>
-       
-      </View>
-    </TouchableWithoutFeedback>
-  )}
-/>
+          
+
+
+    
+            <MainContainer2>
+              <TopContainer>
+              <NameText>{selectedCard.name}</NameText>
+              </TopContainer>
+              <StyledScrollView>
+                  <InfoContainer>
+                    <TitleText>Key partners </TitleText>
+                    <SectionText> {selectedCard.keyPartners} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key activities </TitleText>
+                    <SectionText> {selectedCard.keyActivities} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key resources </TitleText>
+                    <SectionText> {selectedCard.keyResources} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Value proposition </TitleText>
+                    <SectionText> {selectedCard.valuePropositions} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer relationships </TitleText>
+                    <SectionText> {selectedCard.customerRelationships} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Chanels </TitleText>
+                    <SectionText> {selectedCard.channels} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer segments </TitleText>
+                    <SectionText> {selectedCard.customerSegments} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Cost structure </TitleText>
+                    <SectionText> {selectedCard.costStructure} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Revenue Streams </TitleText>
+                    <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  </InfoContainer>
+
+             </StyledScrollView>
+             
+            
+  
+            </MainContainer2>
+             
             <StyledButton onPress={onBackPress}>
               <StyledButtonText>Wróć do kart</StyledButtonText>
             </StyledButton>
+
+
+
           </>
         )}
       </>
     );
+  };
+
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  const handleRightSwipe = (cardIndex: number) => {
+    handleCardSwipe(cardIndex);
+    setShowOverlay(true);
+    animateButtons();
+  };
+
+  const closeOverlay = () => {
+    setShowOverlay(false);
+    resetAnimationsForButtonAndText();
+  };
+
+  const [textAnimations, setTextAnimations] = useState([
+    new Animated.Value(-100), // Start off-screen to the left
+    new Animated.Value(-100),
+  ]);
+
+  const [buttonAnimations, setButtonAnimations] = useState([
+    new Animated.Value(width),
+    new Animated.Value(width),
+  ]);
+
+  const resetAnimationsForButtonAndText = () => {
+    // Reset buttons to off-screen (right side)
+    buttonAnimations.forEach((anim) => anim.setValue(width));
+
+    // Reset text opacity and position
+    textAnimations.forEach((anim) => anim.setValue(0));
+  };
+
+  const animateButtons = () => {
+    buttonAnimations.forEach((anim, index) => {
+      Animated.timing(anim, {
+        toValue: 20,
+        duration: 500,
+        delay: index * 200,
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.timing(textAnimations[index], {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      });
+    });
   };
 
   return (
@@ -324,32 +551,102 @@ const CardSwiper = () => {
             }}
           />
         ) : (
-          <Swiper
-            key={visibleCards.length}
-            cards={visibleCards}
-            renderCard={(card, cardIndex) => (
-              <Card
-                key={card.id}
-                card={card}
-                cardIndex={cardIndex}
-                animations={animations}
-                onPress={() => toggleExpandCard(cardIndex)}
-              />
+          <>
+            <Swiper
+              key={visibleCards.length}
+              cards={visibleCards}
+              renderCard={(card, cardIndex) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  cardIndex={cardIndex}
+                  animations={animations}
+                  onPress={() => toggleExpandCard(cardIndex)}
+                />
+              )}
+              stackSize={3}
+              backgroundColor={"#eeeff0"}
+              verticalSwipe={false}
+              horizontalSwipe={expandedCardId === null}
+              onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
+              onSwipedLeft={(cardIndex) => {
+                handleCardSwipe(cardIndex);
+                console.log("Left Swipe", cardIndex);
+              }}
+              onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
+            />
+            {showOverlay && (
+              <OverlayContainer>
+                <ButtonContainer>
+                  {/* Button 1: Join the group */}
+                  <Animated.View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      transform: [{ translateX: buttonAnimations[0] }],
+                      marginBottom: 20,
+                    }}
+                  >
+                    <RoundButtonContainer
+                      onPress={() => {
+                        console.log("Dane pobrane z data:");
+                        closeOverlay();
+                      }}
+                    >
+                      <Icon name="people-outline" size={30} color="#fff" />
+                    </RoundButtonContainer>
+                    <AnimatedText
+                      style={{
+                        transform: [
+                          {
+                            translateX: textAnimations[0].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-width, 0], // Slide in from the right
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      Join the group
+                    </AnimatedText>
+                  </Animated.View>
+
+                  {/* Button 2: Add to favorites */}
+                  <Animated.View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      transform: [{ translateX: buttonAnimations[1] }],
+                      marginTop: 20,
+                    }}
+                  >
+                    <RoundButtonContainer
+                      onPress={() => {
+                        console.log("Add to favorites");
+                        closeOverlay();
+                      }}
+                    >
+                      <Icon name="heart-outline" size={30} color="#fff" />
+                    </RoundButtonContainer>
+                    <AnimatedText
+                      style={{
+                        transform: [
+                          {
+                            translateX: textAnimations[1].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-width, 0], // Slide in from the right
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      Add to favorites
+                    </AnimatedText>
+                  </Animated.View>
+                </ButtonContainer>
+              </OverlayContainer>
             )}
-            stackSize={3}
-            backgroundColor={"#eeeff0"}
-            verticalSwipe={false}
-            horizontalSwipe={expandedCardId === null}
-            onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
-            onSwipedLeft={(cardIndex) => {
-              handleCardSwipe(cardIndex);
-              console.log("Left Swipe", cardIndex);
-            }}
-            onSwipedRight={(cardIndex) => {
-              handleCardSwipe(cardIndex);
-              console.log("Right Swipe", cardIndex);
-            }}
-          />
+          </>
         )
       ) : (
         <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
@@ -359,3 +656,7 @@ const CardSwiper = () => {
 };
 
 export default CardSwiper;
+function setVisibleCards(projectData: { id: string; }[]) {
+  throw new Error("Function not implemented.");
+}
+

@@ -32,40 +32,42 @@ export default function RegisterSciencist() {
 
 
 
-async function addUserWithIncrement(){
-  try {
-    const scientistRef = collection(db, "scientist");
 
+  async function addUserWithIncrement() {
+    try {
+      // Reference to the "scientist" collection
+      const scientistRef = collection(db, "users");
   
-    const highestIdQuery = query(scientistRef, orderBy("id", "desc"), limit(1));
-    const querySnapshot = await getDocs(highestIdQuery);
-
-    let newId = 1; 
-    if (!querySnapshot.empty) {
-      const highestDoc = querySnapshot.docs[0];
-      newId = highestDoc.data().id + 1;
+      // Query to get the document with the highest 'id'
+      const highestIdQuery = query(scientistRef, orderBy("id", "desc"), limit(1));
+      const querySnapshot = await getDocs(highestIdQuery);
+  
+      let newId = 1; // Default to 1 if no documents exist
+      if (!querySnapshot.empty) {
+        const highestDoc = querySnapshot.docs[0];
+        newId = highestDoc.data().id + 1; // Increment the highest 'id'
+      }
+  
+      await setDoc(doc(scientistRef, newId.toString()), {
+        id: newId,
+        email: form.email,
+        login: form.login,
+        password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        about: form.about,
+        userType: 'Scientist',
+        tags: selected,
+        joinDate: serverTimestamp(), // Add timestamp for join date
+      });
+  
+      console.log("Scientist added with ID:", newId);
+      Alert.alert("Success", "Scientist account created!");
+    } catch (e) {
+      console.error("Error adding scientist with incremented ID:", e);
+      Alert.alert("Error", "Failed to create scientist account.");
     }
-
-    await setDoc(doc(scientistRef, newId.toString()), {
-      id: newId,
-      email: form.email,
-      login: form.login,
-      password: form.password,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      about: form.about,
-      userType: 'Scientist',
-      tags: selected,
-      joinDate: serverTimestamp(), 
-    });
-
-    console.log("Scientist added with ID:", newId);
-    Alert.alert("Success", "Scientist account created!");
-  } catch (e) {
-    console.error("Error adding scientist with incremented ID:", e);
-    Alert.alert("Error", "Failed to create scientist account.");
   }
-}
 
   return (
     <Container>
