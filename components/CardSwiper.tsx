@@ -10,10 +10,12 @@ import {
   Button,
   Text,
   View,
+  ScrollView,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 const { height, width } = Dimensions.get("window");
 
 
@@ -33,7 +35,7 @@ interface ProjectData {
   revenueStreams: string;
   createdAt: Date;
   userId: string;
-  image: string[]; // New field
+  image: string; // New field
   matchPercentage: string; // New field
 }
 
@@ -62,13 +64,13 @@ const fetchProjectsOutsideComponent = async () => {
         revenueStreams: docData.revenueStreams,
         createdAt: docData.createdAt.toDate(),
         userId: docData.userId,
-        image: docData.image || [], // Handle the new field
+        image: docData.image , // Handle the new field
         matchPercentage: docData.matchPercentage || '', // Handle the new field
       });
     });
 
     data = projectList; // Assign fetched data to the global variable
-    console.log("Dane pobrane z data:", data);
+   // console.log("Dane pobrane z data:", data);
     dataLoaded = true;
   } catch (error) {
     console.error("Error fetching projects outside component:", error);
@@ -89,16 +91,80 @@ const StyledText = styled.Text`
 const MainContainer = styled.View`
   flex: 1;
   background-color: white;
-  justify-content: center;
+ justify-content: center;
 `;
 
-const MainContainer2 = styled.View`
-  background-color: white;
-  justify-content: center;
-  width: 95%;
-  height: 95%;
+const MainContainer2 = styled.View` 
+ flex:1;
+ background-color: #eeeff0;
+ align-items: center;
+ justify-content: center;
 `;
 
+const TopContainer = styled.View` 
+ background-color: #eeeff0;
+ align-items: center;
+ justify-content: center;
+`;
+const StyledScrollView = styled.ScrollView.attrs(() => ({
+  contentContainerStyle: {
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingBottom: 80,
+    paddingTop: 35,
+  
+  },
+}))`
+  flex: 1;
+background-color: #eeeff0;
+
+
+`;
+
+
+const InfoContainer = styled.View`
+justify-content: center;
+ align-items: center;
+width:90%;
+padding:20px;
+background-color: red;
+background-color: #ffffff;
+shadow-color: #000;
+shadow-offset: 0px 2px;
+shadow-opacity: 0.25;
+shadow-radius: 3.84px;
+ border-radius:20px;
+  margin-top:15px;
+`
+
+const NameText = styled.Text`
+  font-size: 38px;
+  font-weight: bold;
+  text-align: center;
+  margin-top:60px;
+  color:black;
+`;
+
+
+const DescriptionText = styled.Text`
+  font-size: 28spx;
+  text-align: center;
+  margin-bottom: 5px;
+`;
+
+const TitleText = styled.Text`
+ font-weight: bold;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: 5px;
+  color:black;
+`;
+
+const SectionText = styled.Text`
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 5px;
+`;
 //dol karty
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
@@ -227,7 +293,7 @@ const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
-        <CardImage source={{ uri: card.image[0] }} resizeMode={"stretch"} />
+        <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
           <CardDescription>{card.description}</CardDescription>
@@ -240,7 +306,7 @@ const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
 const CardSwiper = () => {
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-  console.log("Dane przed przypisaniem:", data);
+  //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState(data);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
@@ -319,7 +385,7 @@ const CardSwiper = () => {
 
     setProjectId((prevId) => {
       const newId = prevId + 1;
-      console.log("drugie project id:", newId);
+     // console.log("drugie project id:", newId);
       return newId;
     });
   };
@@ -361,30 +427,64 @@ const [selectedItem, setSelectedItem] = useState(null);
           </TouchableWithoutFeedback>
         ) : (
           <>
-            <FlatList
-              data={selectedCard.image}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableWithoutFeedback onPress={() => expandImage(item)}>
-                  <View
-                    style={{
-                      width: width,
-                      height: 350,
-                      backgroundColor: "black",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <MainContainer2>
-                      <Text>dasdas</Text>
-                    </MainContainer2>
-                  </View>
-                </TouchableWithoutFeedback>
-              )}
-            />
+          
+
+
+    
+            <MainContainer2>
+              <TopContainer>
+              <NameText>{selectedCard.name}</NameText>
+              </TopContainer>
+              <StyledScrollView>
+                  <InfoContainer>
+                    <TitleText>Key partners </TitleText>
+                    <SectionText> {selectedCard.keyPartners} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key activities </TitleText>
+                    <SectionText> {selectedCard.keyActivities} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key resources </TitleText>
+                    <SectionText> {selectedCard.keyResources} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Value proposition </TitleText>
+                    <SectionText> {selectedCard.valuePropositions} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer relationships </TitleText>
+                    <SectionText> {selectedCard.customerRelationships} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Chanels </TitleText>
+                    <SectionText> {selectedCard.channels} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer segments </TitleText>
+                    <SectionText> {selectedCard.customerSegments} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Cost structure </TitleText>
+                    <SectionText> {selectedCard.costStructure} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Revenue Streams </TitleText>
+                    <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  </InfoContainer>
+
+             </StyledScrollView>
+             
+            
+  
+            </MainContainer2>
+             
             <StyledButton onPress={onBackPress}>
               <StyledButtonText>Wróć do kart</StyledButtonText>
             </StyledButton>
+
+
+
           </>
         )}
       </>
@@ -489,7 +589,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                   >
                     <RoundButtonContainer
                       onPress={() => {
-                        console.log("Join the group");
+                        console.log("Dane pobrane z data:");
                         closeOverlay();
                       }}
                     >

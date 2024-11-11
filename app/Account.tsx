@@ -16,6 +16,7 @@ import { doc, getDoc, DocumentData } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from "../config/FirebaseConfig";
 import styled from "styled-components/native";
+import { router } from "expo-router";
 const screenWidth = Dimensions.get('window').width;
 interface UserData {
   email: string;
@@ -29,13 +30,13 @@ interface UserData {
 }
 
 const Account = () => {
-  const [userData, setUserData] = useState<UserData | null>(null); 
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-  
+
         const userId = await AsyncStorage.getItem('userId');
 
         if (!userId) {
@@ -47,7 +48,7 @@ const Account = () => {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData); 
+          setUserData(userDoc.data() as UserData);
         } else {
           console.log("No such user!");
         }
@@ -70,131 +71,80 @@ const Account = () => {
   }
 
   return (
-    // <View style={styles.container}>
-    //   <Text style={styles.text}>ID: {userData?.id ?? "N/A"}</Text>
-    //   <Text style={styles.text}>First Name: {userData?.firstName ?? "N/A"}</Text>
-    //   <Text style={styles.text}>Last Name: {userData?.lastName ?? "N/A"}</Text>
-    //   <Text style={styles.text}>Email: {userData?.email ?? "N/A"}</Text>
-    //   <Text style={styles.text}>Login: {userData?.login ?? "N/A"}</Text>
-    //   <Text style={styles.text}>Password: {userData?.password ?? "N/A"}</Text>
-    //   <Text style={styles.text}>User Type: {userData?.userType ?? "N/A"}</Text>
-    // </View>
+
 
     <Container>
       <CenterContainer>
         <ProfileContainer>
           <ProfileImage
-                source={require('../assets/images/suj.jpg')} />
+            source={require('../assets/images/profil.jpg')} />
           <ProfileName>
-            <StyledText>
-              {userData?.firstName ?? "N/A"} {userData?.lastName ?? "N/A"}
-            </StyledText>
+            {userData?.firstName ?? "N/A"} {userData?.lastName ?? "N/A"}
           </ProfileName>
           <ProfileType>
             {userData?.userType ?? "N/A"}
           </ProfileType>
-
-          <AboutContainer>
-          <AboutMainText> About me</AboutMainText>
           <AboutText>
             {userData?.about ?? "N/A"}
           </AboutText>
-        </AboutContainer>
-          {/* <StatsContainer>
-            <Stat>
-              <StatLabel>Project</StatLabel>
-              <StatValue>13</StatValue>
-            </Stat>
-            <Stat>
-              <StatLabel>Following</StatLabel>
-              <StatValue>123</StatValue>
-            </Stat>
-            <Stat>
-              <StatLabel>Chats</StatLabel>
-              <StatValue>43</StatValue>
-            </Stat>
-          </StatsContainer> */}
         </ProfileContainer>
         <UnderProfile>
           <FirstRow>
             <RowElement>
-            <RowInfo> 
-            <IconImage
-             source={require('../assets/images/icon1.png')} />
-             </RowInfo>
-             <RowInfo>
-             <StatValue>13</StatValue>
-             <StatLabel>Project </StatLabel>
-             </RowInfo>
-          
+              <RowInfo>
+                <IconImage
+                  source={require('../assets/images/icon1.png')} />
+              </RowInfo>
+              <RowInfo>
+                <StatValue>13</StatValue>
+                <StatLabel>Project </StatLabel>
+              </RowInfo>
             </RowElement>
             <RowElement>
-            <RowInfo> 
-            <IconImage
-             source={require('../assets/images/icon2.png')} />
-             </RowInfo>
-             <RowInfo>
-             <StatValue>9</StatValue>
-             <StatLabel>Help </StatLabel>
-             </RowInfo>
+              <RowInfo>
+                <IconImage
+                  source={require('../assets/images/icon2.png')} />
+              </RowInfo>
+              <RowInfo>
+                <StatValue>9</StatValue>
+                <StatLabel>Help </StatLabel>
+              </RowInfo>
             </RowElement>
           </FirstRow>
           <FirstRow>
-          <RowElement>
-            <RowInfo> 
-            <IconImage
-             source={require('../assets/images/icon3.png')} />
-             </RowInfo>
-             <RowInfo>
-             <StatValue>3</StatValue>
-             <StatLabel>Teams </StatLabel>
-             </RowInfo>
-          
+            <RowElement>
+              <RowInfo>
+                <IconImage
+                  source={require('../assets/images/icon3.png')} />
+              </RowInfo>
+              <RowInfo>
+                <StatValue>3</StatValue>
+                <StatLabel>Teams </StatLabel>
+              </RowInfo>
+
             </RowElement>
             <RowElement>
-            <RowInfo> 
-            <IconImage
-             source={require('../assets/images/icon5.png')} />
-             </RowInfo>
-             <RowInfo>
-             <StatValue>99</StatValue>
-             <StatLabel>Friends </StatLabel>
-             </RowInfo>
+              <RowInfo>
+                <IconImage
+                  source={require('../assets/images/icon5.png')} />
+              </RowInfo>
+              <RowInfo>
+                <StatValue>99</StatValue>
+                <StatLabel>Friends </StatLabel>
+              </RowInfo>
             </RowElement>
           </FirstRow>
+          <CanvasRow onPress={() => router.push('/Model')}>
+            <RowInfoC>
+              <IconImageC
+                source={require('../assets/images/canvas.png')} />
+            </RowInfoC>
+            <RowInfoC>
+              <StatValueC>Create a new project!</StatValueC>
+              <StatLabel> With Business Canvas Model. </StatLabel>
+            </RowInfoC>
+          </CanvasRow>
         </UnderProfile>
-        {/* <AboutContainer>
-          <AboutText>
-            {userData?.about ?? "N/A"}
-          </AboutText>
-        </AboutContainer> */}
-  
-        {/* <InfoContainer>
-          <InfoRow>
-            <InfoLabel>Age</InfoLabel>
-            <InfoValue>20-30 Years Old</InfoValue>
-          </InfoRow>
-          <InfoRow>
-            <InfoLabel>Gender</InfoLabel>
-            <InfoValue>Male</InfoValue>
-          </InfoRow>
-          <InfoRow>
-            <InfoLabel>Joined</InfoLabel>
-            <InfoValue>March 04, 2023</InfoValue>
-          </InfoRow>
-          <InfoRow>
-            <InfoLabel>Location</InfoLabel>
-            <InfoValue>Alger, Canada</InfoValue>
-          </InfoRow>
-          <InfoRow>
-            <InfoLabel>Reviews</InfoLabel>
-            <RatingContainer>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star key={index}>{index < 3 ? '★' : '☆'}</Star>
-              ))}
-            </RatingContainer>
-          </InfoRow>
-        </InfoContainer> */}
       </CenterContainer>
     </Container>
   );
@@ -203,36 +153,34 @@ const Account = () => {
 const Container = styled(ScrollView).attrs({
   contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
 })`
-    background-color: #ced0d2;
+    background-color:  #1e1e1e;
   `;
 
 const CenterContainer = styled.View`
-   
      width:  ${screenWidth > 768 ? '600px' : '100%'};
-     background-color: #eeeff0;
      height:100%;
      align-items: center;
-     padding-top:20px;
      border-radius:20px;
-     border:1px;
+
   `;
 
 
 const ProfileContainer = styled.View`
-    align-items: center;
-    padding: 20px;
-    width:85%;
-    margin-top:80px;
-    border-radius:20px;
-    background-color:#ffffff;
-     shadow-color: #000;
+  align-items: center;
+  padding: 20px;
+  padding-bottom:0px;
+  width:85%;
+  margin-top:80px;
+  border-radius:20px;
+  background-color:#3d3d3d;
+  shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   `;
 
 
-  const UnderProfile = styled.View`
+const UnderProfile = styled.View`
     align-items: center;
     padding: 20px;
     width:100%;
@@ -240,25 +188,41 @@ const ProfileContainer = styled.View`
     border-radius:20px;
   `;
 
-  const FirstRow = styled.View`
+const FirstRow = styled.View`
   width:100%;
   height:80px;
   border-radius:20px;
   flexDirection:row;
   justifyContent:space-around;
   margin-top:10px;
+
+`;
+
+
+const CanvasRow = styled.TouchableOpacity`
+  width:95%;
+  height:80px;
+  border-radius:20px;
+  flexDirection:row;
+  justifyContent:center;
+  margin-top:10px;
+  background-color:#3d3d3d;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
 `;
 
 const RowElement = styled.TouchableOpacity`
 flexDirection:row;
-background-color:#ffffff;
+background-color:#3d3d3d;
 width:45%;
 height:100%;
 border-radius:20px;
- shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.25;
-  shadow-radius: 3.84px;
+shadow-color: #000;
+shadow-offset: 0px 2px;
+shadow-opacity: 0.25;
+shadow-radius: 3.84px;
 
 `;
 
@@ -269,15 +233,33 @@ const IconImage = styled(Image)`
     margin-left:10px;
   `;
 
-  const RowInfo = styled.View`
+const IconImageC = styled(Image)`
+    width: 40px;
+    height: 40px;
+    margin-left:10px;
+
+  `;
+
+const RowInfo = styled.View`
   margin-left:20px;
   width:50pxs;
   height:100%;
   border-radius:20px;
-   justifyContent:center;
-   align-items: center;
+  justifyContent:center;
+  align-items: center;
   `;
-  
+
+
+const RowInfoC = styled.View`
+width:50pxs;
+height:100%;
+border-radius:20px;
+ justifyContent:center;
+ align-items: left;
+  font-weight: bold;
+  margin-left:5px;
+`;
+
 const AboutContainer = styled.View`
     align-items: center;
     height:100px;
@@ -293,8 +275,9 @@ const AboutContainer = styled.View`
   `;
 
 const AboutText = styled(Text)`
+   margin-top:5px;
    font-size: 14px;
-    color: black;
+    color: white;
     text-align: center;
     padding-horizontal: 16px;
     line-height: 20px;
@@ -308,8 +291,9 @@ const ProfileImage = styled(Image)`
   `;
 
 const ProfileName = styled(Text)`
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
+    color: white;
   `;
 
 const ProfileType = styled(Text)`
@@ -365,7 +349,7 @@ const StyledText = styled(Text)`
 
 
 const AboutMainText = styled(Text)`
- font-size:26px;
+ font-size:24px;
   color: #000;
    font-weight: bold;
   color: #333;
@@ -392,6 +376,12 @@ const StatLabel = styled.Text`
 
 const StatValue = styled.Text`
   font-size: 28px;
+  color: white;
+`;
+
+const StatValueC = styled.Text`
+color: white;
+  font-size: 26px;
 `;
 
 export default Account;
