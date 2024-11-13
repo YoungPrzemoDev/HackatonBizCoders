@@ -30,9 +30,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 const { height, width } = Dimensions.get("window");
 
-//let data: ProjectData[] = [];
-let dataLoaded = false;
-
 export const joinGroup = async (projectId: string, userId: string) => {
   try {
     const projectRef = doc(db, "projects", projectId);
@@ -190,13 +187,6 @@ const CardSwiper = () => {
       );
     }
   }, [data]);
-
-  // const animations = useRef(
-  //   data.map(() => ({
-  //     scale: new Animated.Value(0.75),
-  //     borderRadius: new Animated.Value(30),
-  //   }))
-  // ).current;
 
   const resetAllAnimations = () => {
     animations.forEach((anim) => {
