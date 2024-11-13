@@ -15,69 +15,570 @@ import {
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { fetchProjects,ProjectData } from "../services/FirebaseService";
+import { getRecommendation } from "../services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from 'axios';
 const { height, width } = Dimensions.get("window");
 
 
 
-interface ProjectData {
-  name: string;
-  description: string;
-  id: string;
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
-  createdAt: Date;
-  userId: string;
-  image: string; // New field
-  matchPercentage: string; // New field
-}
+// interface ProjectData {
+//   name: string;
+//   description: string;
+//   id: string;
+//   keyPartners: string;
+//   keyActivities: string;
+//   keyResources: string;
+//   valuePropositions: string;
+//   customerRelationships: string;
+//   channels: string;
+//   customerSegments: string;
+//   costStructure: string;
+//   revenueStreams: string;
+//   createdAt: Date;
+//   userId: string;
+//   image: string; // New field
+//   matchPercentage: string; // New field
+// }
 
-let data: ProjectData[] = [];
+//let data: ProjectData[] = [];
 let dataLoaded = false;
 
-const fetchProjectsOutsideComponent = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, "projects"));
-    const projectList: ProjectData[] = [];
+// const fetchProjectsOutsideComponent = async () => {
+//   try {
+//     const querySnapshot = await getDocs(collection(db, "projects"));
+    
+//     // const response = await axios.get(`http:localhost/recommendation`, {
+//     //   params: { userId },  // For query parameter
+//     // });
+//     // console.log("Fetched numbers array:", response.data); 
+//     const userId = await AsyncStorage.getItem('userId');
+//     console.log("user o id:::: ", userId)
+//     const projectList: ProjectData[] = [];
+    
+//     querySnapshot.forEach((doc) => {
+//       const docData = doc.data();
+//       projectList.push({
+//         name: docData.name,
+//         description: docData.description,
+//         id: doc.id,
+//         keyPartners: docData.keyPartners,
+//         keyActivities: docData.keyActivities,
+//         keyResources: docData.keyResources,
+//         valuePropositions: docData.valuePropositions,
+//         customerRelationships: docData.customerRelationships,
+//         channels: docData.channels,
+//         customerSegments: docData.customerSegments,
+//         costStructure: docData.costStructure,
+//         revenueStreams: docData.revenueStreams,
+//         createdAt: docData.createdAt.toDate(),
+//         userId: docData.userId,
+//         image: docData.image , // Handle the new field
+//         matchPercentage: docData.matchPercentage || '', // Handle the new field
+//       });
+//     });
 
-    querySnapshot.forEach((doc) => {
-      const docData = doc.data();
-      projectList.push({
-        name: docData.name,
-        description: docData.description,
-        id: doc.id,
-        keyPartners: docData.keyPartners,
-        keyActivities: docData.keyActivities,
-        keyResources: docData.keyResources,
-        valuePropositions: docData.valuePropositions,
-        customerRelationships: docData.customerRelationships,
-        channels: docData.channels,
-        customerSegments: docData.customerSegments,
-        costStructure: docData.costStructure,
-        revenueStreams: docData.revenueStreams,
-        createdAt: docData.createdAt.toDate(),
-        userId: docData.userId,
-        image: docData.image , // Handle the new field
-        matchPercentage: docData.matchPercentage || '', // Handle the new field
-      });
-    });
+//     data = projectList; // Assign fetched data to the global variable
+//    // console.log("Dane pobrane z data:", data);
+//     dataLoaded = true;
+//   } catch (error) {
+//     console.error("Error fetching projects outside component:", error);
+//   }
+// };
 
-    data = projectList; // Assign fetched data to the global variable
-   // console.log("Dane pobrane z data:", data);
-    dataLoaded = true;
-  } catch (error) {
-    console.error("Error fetching projects outside component:", error);
-  }
+// fetchProjectsOutsideComponent();
+
+
+const getCardStyle = (cardIndex, animations) => {
+  const animatedScale = animations[cardIndex].scale;
+
+  const animatedHeight = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [height * 0.9, height],
+  });
+  const animatedWidth = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [width * 1.1, width],
+  });
+  const animatedRadius = animatedScale.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [30, 1],
+  });
+
+  return {
+    width: animatedWidth,
+    height: animatedHeight,
+    transform: [{ scale: animatedScale }],
+    borderRadius: animatedRadius,
+  };
 };
 
-fetchProjectsOutsideComponent();
+const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
+
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+console.log("main",cardIndex);
+  return (
+    <TouchableWithoutFeedback onPress={onPress}>
+      <CardContainer style={getCardStyle(cardIndex, animations)}>
+        <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
+        <CardDetails>
+      
+          <CardTitle>{card.name}</CardTitle>
+          <CardDescription>{card.description}</CardDescription>
+        </CardDetails>
+      </CardContainer>
+    </TouchableWithoutFeedback>
+  );
+};
+let callCount = 0;
+const CardSwiper = () => {
+  const [projectId, setProjectId] = useState<number>(1); // Initial project ID
+  const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
+  //console.log("Dane przed przypisaniem:", data);
+  const [visibleCards, setVisibleCards] = useState<ProjectData[]>([]);
+  const [data, setData] = useState<ProjectData[]>([]);
+  
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const imageScale = useRef(new Animated.Value(1)).current;
+
+
+  const [animations, setAnimations] = useState([]);
+
+  console.log("Jestem w swiper")
+  
+  useEffect(() => {
+    // Fetch projects when the component mounts
+    const fetchData = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        console.log(userId);
+        const recommendation = await getRecommendation(userId);
+        console.log(recommendation);
+        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        const fetchedData : ProjectData[] =await fetchProjects();
+        //useState(data); // Set fetched data as visible cards
+        //console.log(fetchedData)
+        //sortowanie 
+        console.log("Before sorting:", fetchedData.map(item => item.id));
+        
+        const sortedData = await Promise.all(
+          fetchedData.map(async (item) => {
+            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+            const index = await recommendation.indexOf(item.id);
+            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+          })
+        );
+        
+        // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
+        sortedData.sort((a, b) => a.index - b.index);
+        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+
+        for (let index = 0; index < finalSortedData.length; index++) {
+          const element = finalSortedData[index];
+          console.log("ID:",element.id);
+          console.log("Tittle",element.name);
+          console.log("Key partners:",element.keyPartners);
+          console.log("------------------------------------------")
+          
+        }
+         console.log("After sorting:", finalSortedData.map(item => item.id));
+
+        ////////
+        setData(finalSortedData);
+        setVisibleCards(finalSortedData);
+        //console.log(sortedData);
+        
+      } catch (error) {
+        console.error("Error fetching projects on mount:", error);
+      }
+    };
+    fetchData();
+  }, []);
+  
+  
+  useEffect(() => {
+    if (data.length > 0) {
+      setAnimations(
+        data.map(() => ({
+          scale: new Animated.Value(0.75),
+          borderRadius: new Animated.Value(30),
+        }))
+      );
+    }
+  }, [data]);
+
+  
+
+  // const animations = useRef(
+  //   data.map(() => ({
+  //     scale: new Animated.Value(0.75),
+  //     borderRadius: new Animated.Value(30),
+  //   }))
+  // ).current;
+
+  const resetAllAnimations = () => {
+    animations.forEach((anim) => {
+      Animated.parallel([
+        Animated.timing(anim.scale, {
+          toValue: 0.75,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(anim.borderRadius, {
+          toValue: 30,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    });
+  };
+
+  const expandImage = (imageUri) => {
+    setExpandedImage(imageUri);
+    Animated.timing(imageScale, {
+      toValue: 1.5,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const resetImage = () => {
+    Animated.timing(imageScale, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => {
+      setExpandedImage(null);
+    });
+  };
+  
+  const toggleExpandCard = (cardIndex: number) => {
+    console.log("INdex przekazywany z karty!!!",cardIndex)
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+    console.log("222INdex przekazywany z karty!!!",cardIndex)
+    const card = data[cardIndex];
+    console.log(card);
+    const selectedCardId = card.id;
+    const isExpanded = expandedCardId === selectedCardId;
+
+    Animated.parallel([
+      Animated.timing(animations[cardIndex].scale, {
+        toValue: isExpanded ? 0.75 : 1,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animations[cardIndex].borderRadius, {
+        toValue: isExpanded ? 30 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      setExpandedCardId(isExpanded ? null : callCount);
+        console.log("Liczba wywołań toggleExpandCard:", callCount);
+    });
+  };
+
+  const handleCardSwipe = (cardIndex:  number) => {
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+    const cardId = visibleCards[cardIndex].id;
+    setVisibleCards((currentCards) =>
+      currentCards.filter((card) => card.id !== cardId)
+    );
+
+    callCount += 1;
+  };
+const [selectedItem, setSelectedItem] = useState(null);
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
+  };
+
+  const ImageList = ({ cardIndex, onBackPress }) => {
+
+     console.log("INdexxxxxxxx w imagelist:",cardIndex);
+     const selectedCard = data[cardIndex];
+    // console.log("ID:",selectedCard.id);
+    // console.log("Tittle",selectedCard.name);
+    // console.log("Key partners:",selectedCard.keyPartners);
+    // console.log("------------------------------------------")
+
+
+
+
+    // console.log("ImageList",cardIndex);
+    // console.log("IDX",selectedCard.id);
+
+    return (
+      <>
+        {expandedImage ? (
+          <TouchableWithoutFeedback onPress={resetImage}>
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.8)",
+              }}
+            >
+              <Animated.Image
+                source={{ uri: expandedImage }}
+                style={{
+                  maxWidth: width,
+                  maxHeight: height,
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "contain",
+                  transform: [{ scale: imageScale }],
+                }}
+              />
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        ) : (
+          <>
+          
+
+
+    
+            <MainContainer2>
+              <TopContainer>
+              <NameText>{selectedCard.name}</NameText>
+              </TopContainer>
+              <StyledScrollView>
+                  <InfoContainer>
+                    <TitleText>Key partners </TitleText>
+                    <SectionText> {selectedCard.keyPartners} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key activities </TitleText>
+                    <SectionText> {selectedCard.keyActivities} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Key resources </TitleText>
+                    <SectionText> {selectedCard.keyResources} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Value proposition </TitleText>
+                    <SectionText> {selectedCard.valuePropositions} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer relationships </TitleText>
+                    <SectionText> {selectedCard.customerRelationships} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Chanels </TitleText>
+                    <SectionText> {selectedCard.channels} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Customer segments </TitleText>
+                    <SectionText> {selectedCard.customerSegments} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Cost structure </TitleText>
+                    <SectionText> {selectedCard.costStructure} </SectionText>
+                  </InfoContainer>
+                  <InfoContainer>
+                    <TitleText>Revenue Streams </TitleText>
+                    <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  </InfoContainer>
+
+             </StyledScrollView>
+             
+            
+  
+            </MainContainer2>
+             
+            <StyledButton onPress={onBackPress}>
+              <StyledButtonText>Wróć do kart</StyledButtonText>
+            </StyledButton>
+
+
+
+          </>
+        )}
+      </>
+    );
+  };
+
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  const handleRightSwipe = (cardIndex: number) => {
+    handleCardSwipe(cardIndex);
+    setShowOverlay(true);
+    animateButtons();
+  };
+
+  const closeOverlay = () => {
+    setShowOverlay(false);
+    resetAnimationsForButtonAndText();
+  };
+
+  const [textAnimations, setTextAnimations] = useState([
+    new Animated.Value(-100), // Start off-screen to the left
+    new Animated.Value(-100),
+  ]);
+
+  const [buttonAnimations, setButtonAnimations] = useState([
+    new Animated.Value(width),
+    new Animated.Value(width),
+  ]);
+
+  const resetAnimationsForButtonAndText = () => {
+    // Reset buttons to off-screen (right side)
+    buttonAnimations.forEach((anim) => anim.setValue(width));
+
+    // Reset text opacity and position
+    textAnimations.forEach((anim) => anim.setValue(0));
+  };
+
+  const animateButtons = () => {
+    buttonAnimations.forEach((anim, index) => {
+      Animated.timing(anim, {
+        toValue: 20,
+        duration: 500,
+        delay: index * 200,
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.timing(textAnimations[index], {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      });
+    });
+  };
+
+  return (
+   
+    <MainContainer>
+      {visibleCards.length > 0 ? (
+        expandedCardId !== null ? (
+          <ImageList
+            cardIndex={expandedCardId }//tu sie podaje numer projektu id a nie index i zmienia sie indeks
+            onBackPress={() => {
+              resetAllAnimations();
+              setExpandedCardId(null);
+            }}
+          />
+        ) : (
+          <>
+            <Swiper
+              key={visibleCards.length}
+              cards={visibleCards}
+              renderCard={(card, cardIndex) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  cardIndex={cardIndex}
+                  animations={animations}
+                  onPress={() => toggleExpandCard(cardIndex)}
+                  
+                />
+                
+              )}
+              
+              stackSize={3}
+              backgroundColor={"#eeeff0"}
+              verticalSwipe={false}
+              horizontalSwipe={expandedCardId === null}
+              onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
+              onSwipedLeft={(cardIndex) => {
+                handleCardSwipe(cardIndex);
+                console.log("Left Swipe", cardIndex);
+              }}
+              onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
+            />
+            {showOverlay && (
+              <OverlayContainer>
+                <ButtonContainer>
+                  {/* Button 1: Join the group */}
+                  <Animated.View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      transform: [{ translateX: buttonAnimations[0] }],
+                      marginBottom: 20,
+                    }}
+                  >
+                    <RoundButtonContainer
+                      onPress={() => {
+                        console.log("Dane pobrane z data:");
+                        closeOverlay();
+                      }}
+                    >
+                      <Icon name="people-outline" size={30} color="#fff" />
+                    </RoundButtonContainer>
+                    <AnimatedText
+                      style={{
+                        transform: [
+                          {
+                            translateX: textAnimations[0].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-width, 0], // Slide in from the right
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      Join the group
+                    </AnimatedText>
+                  </Animated.View>
+
+                  {/* Button 2: Add to favorites */}
+                  <Animated.View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      transform: [{ translateX: buttonAnimations[1] }],
+                      marginTop: 20,
+                    }}
+                  >
+                    <RoundButtonContainer
+                      onPress={() => {
+                        console.log("Add to favorites");
+                        closeOverlay();
+                      }}
+                    >
+                      <Icon name="heart-outline" size={30} color="#fff" />
+                    </RoundButtonContainer>
+                    <AnimatedText
+                      style={{
+                        transform: [
+                          {
+                            translateX: textAnimations[1].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-width, 0], // Slide in from the right
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      Add to favorites
+                    </AnimatedText>
+                  </Animated.View>
+                </ButtonContainer>
+              </OverlayContainer>
+            )}
+          </>
+        )
+      ) : (
+        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
+      )}
+    </MainContainer>
+  );
+};
+
+export default CardSwiper;
+function setVisibleCards(projectData: { id: string; }[]) {
+  throw new Error("Function not implemented.");
+}
+
 
 const StyledText = styled.Text`
   color: red;
@@ -259,404 +760,3 @@ const AnimatedText = styled(Animated.Text)`
   top: 20px;
   margin-left: 10px;
 `;
-
-const getCardStyle = (cardIndex, animations) => {
-  const animatedScale = animations[cardIndex].scale;
-
-  const animatedHeight = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [height * 0.9, height],
-  });
-  const animatedWidth = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [width * 1.1, width],
-  });
-  const animatedRadius = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [30, 1],
-  });
-
-  return {
-    width: animatedWidth,
-    height: animatedHeight,
-    transform: [{ scale: animatedScale }],
-    borderRadius: animatedRadius,
-  };
-};
-
-const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
-
-  const [projectData, setProjectData] = useState<ProjectData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-
-  return (
-    <TouchableWithoutFeedback onPress={onPress}>
-      <CardContainer style={getCardStyle(cardIndex, animations)}>
-        <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
-        <CardDetails>
-          <CardTitle>{card.name}</CardTitle>
-          <CardDescription>{card.description}</CardDescription>
-        </CardDetails>
-      </CardContainer>
-    </TouchableWithoutFeedback>
-  );
-};
-
-const CardSwiper = () => {
-  const [projectId, setProjectId] = useState<number>(1); // Initial project ID
-  const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
-  //console.log("Dane przed przypisaniem:", data);
-  const [visibleCards, setVisibleCards] = useState(data);
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
-  const imageScale = useRef(new Animated.Value(1)).current;
-
-  const animations = useRef(
-    data.map(() => ({
-      scale: new Animated.Value(0.75),
-      borderRadius: new Animated.Value(30),
-    }))
-  ).current;
-
-  const resetAllAnimations = () => {
-    animations.forEach((anim) => {
-      Animated.parallel([
-        Animated.timing(anim.scale, {
-          toValue: 0.75,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(anim.borderRadius, {
-          toValue: 30,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    });
-  };
-
-  const expandImage = (imageUri) => {
-    setExpandedImage(imageUri);
-    Animated.timing(imageScale, {
-      toValue: 1.5,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const resetImage = () => {
-    Animated.timing(imageScale, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      setExpandedImage(null);
-    });
-  };
-
-  const toggleExpandCard = (cardIndex: number) => {
-    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
-    const card = visibleCards[cardIndex];
-    const selectedCardId = card.id;
-    const isExpanded = expandedCardId === selectedCardId;
-
-    Animated.parallel([
-      Animated.timing(animations[cardIndex].scale, {
-        toValue: isExpanded ? 0.75 : 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animations[cardIndex].borderRadius, {
-        toValue: isExpanded ? 30 : 0,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start(() => {
-      setExpandedCardId(isExpanded ? null : selectedCardId);
-    });
-  };
-
-  const handleCardSwipe = (cardIndex:  number) => {
-    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
-    const cardId = visibleCards[cardIndex].id;
-    setVisibleCards((currentCards) =>
-      currentCards.filter((card) => card.id !== cardId)
-    );
-
-    setProjectId((prevId) => {
-      const newId = prevId + 1;
-     // console.log("drugie project id:", newId);
-      return newId;
-    });
-  };
-const [selectedItem, setSelectedItem] = useState(null);
-  const handleSelectItem = (item) => {
-    setSelectedItem(item);
-  };
-
-  const ImageList = ({ cardIndex, onBackPress }) => {
-    const selectedCard = data[cardIndex];
-    return (
-      <>
-        {expandedImage ? (
-          <TouchableWithoutFeedback onPress={resetImage}>
-            <Animated.View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-              }}
-            >
-              <Animated.Image
-                source={{ uri: expandedImage }}
-                style={{
-                  maxWidth: width,
-                  maxHeight: height,
-                  width: "100%",
-                  height: "100%",
-                  resizeMode: "contain",
-                  transform: [{ scale: imageScale }],
-                }}
-              />
-            </Animated.View>
-          </TouchableWithoutFeedback>
-        ) : (
-          <>
-          
-
-
-    
-            <MainContainer2>
-              <TopContainer>
-              <NameText>{selectedCard.name}</NameText>
-              </TopContainer>
-              <StyledScrollView>
-                  <InfoContainer>
-                    <TitleText>Key partners </TitleText>
-                    <SectionText> {selectedCard.keyPartners} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Key activities </TitleText>
-                    <SectionText> {selectedCard.keyActivities} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Key resources </TitleText>
-                    <SectionText> {selectedCard.keyResources} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Value proposition </TitleText>
-                    <SectionText> {selectedCard.valuePropositions} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Customer relationships </TitleText>
-                    <SectionText> {selectedCard.customerRelationships} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Chanels </TitleText>
-                    <SectionText> {selectedCard.channels} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Customer segments </TitleText>
-                    <SectionText> {selectedCard.customerSegments} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Cost structure </TitleText>
-                    <SectionText> {selectedCard.costStructure} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Revenue Streams </TitleText>
-                    <SectionText> {selectedCard.revenueStreams} </SectionText>
-                  </InfoContainer>
-
-             </StyledScrollView>
-             
-            
-  
-            </MainContainer2>
-             
-            <StyledButton onPress={onBackPress}>
-              <StyledButtonText>Wróć do kart</StyledButtonText>
-            </StyledButton>
-
-
-
-          </>
-        )}
-      </>
-    );
-  };
-
-  const [showOverlay, setShowOverlay] = useState(false);
-
-  const handleRightSwipe = (cardIndex: number) => {
-    handleCardSwipe(cardIndex);
-    setShowOverlay(true);
-    animateButtons();
-  };
-
-  const closeOverlay = () => {
-    setShowOverlay(false);
-    resetAnimationsForButtonAndText();
-  };
-
-  const [textAnimations, setTextAnimations] = useState([
-    new Animated.Value(-100), // Start off-screen to the left
-    new Animated.Value(-100),
-  ]);
-
-  const [buttonAnimations, setButtonAnimations] = useState([
-    new Animated.Value(width),
-    new Animated.Value(width),
-  ]);
-
-  const resetAnimationsForButtonAndText = () => {
-    // Reset buttons to off-screen (right side)
-    buttonAnimations.forEach((anim) => anim.setValue(width));
-
-    // Reset text opacity and position
-    textAnimations.forEach((anim) => anim.setValue(0));
-  };
-
-  const animateButtons = () => {
-    buttonAnimations.forEach((anim, index) => {
-      Animated.timing(anim, {
-        toValue: 20,
-        duration: 500,
-        delay: index * 200,
-        useNativeDriver: true,
-      }).start(() => {
-        Animated.timing(textAnimations[index], {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }).start();
-      });
-    });
-  };
-
-  return (
-    <MainContainer>
-      {visibleCards.length > 0 ? (
-        expandedCardId !== null ? (
-          <ImageList
-            cardIndex={expandedCardId - 1}
-            onBackPress={() => {
-              resetAllAnimations();
-              setExpandedCardId(null);
-            }}
-          />
-        ) : (
-          <>
-            <Swiper
-              key={visibleCards.length}
-              cards={visibleCards}
-              renderCard={(card, cardIndex) => (
-                <Card
-                  key={card.id}
-                  card={card}
-                  cardIndex={cardIndex}
-                  animations={animations}
-                  onPress={() => toggleExpandCard(cardIndex)}
-                />
-              )}
-              stackSize={3}
-              backgroundColor={"#eeeff0"}
-              verticalSwipe={false}
-              horizontalSwipe={expandedCardId === null}
-              onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
-              onSwipedLeft={(cardIndex) => {
-                handleCardSwipe(cardIndex);
-                console.log("Left Swipe", cardIndex);
-              }}
-              onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
-            />
-            {showOverlay && (
-              <OverlayContainer>
-                <ButtonContainer>
-                  {/* Button 1: Join the group */}
-                  <Animated.View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      transform: [{ translateX: buttonAnimations[0] }],
-                      marginBottom: 20,
-                    }}
-                  >
-                    <RoundButtonContainer
-                      onPress={() => {
-                        console.log("Dane pobrane z data:");
-                        closeOverlay();
-                      }}
-                    >
-                      <Icon name="people-outline" size={30} color="#fff" />
-                    </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[0].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Join the group
-                    </AnimatedText>
-                  </Animated.View>
-
-                  {/* Button 2: Add to favorites */}
-                  <Animated.View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      transform: [{ translateX: buttonAnimations[1] }],
-                      marginTop: 20,
-                    }}
-                  >
-                    <RoundButtonContainer
-                      onPress={() => {
-                        console.log("Add to favorites");
-                        closeOverlay();
-                      }}
-                    >
-                      <Icon name="heart-outline" size={30} color="#fff" />
-                    </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[1].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Add to favorites
-                    </AnimatedText>
-                  </Animated.View>
-                </ButtonContainer>
-              </OverlayContainer>
-            )}
-          </>
-        )
-      ) : (
-        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
-      )}
-    </MainContainer>
-  );
-};
-
-export default CardSwiper;
-function setVisibleCards(projectData: { id: string; }[]) {
-  throw new Error("Function not implemented.");
-}
-
