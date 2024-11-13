@@ -1,161 +1,204 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
-import { Link, router } from 'expo-router';
-import { MultiSelect } from 'react-native-element-dropdown';  
+import { Dimensions, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { Link } from 'expo-router';
+import { MultiSelect } from 'react-native-element-dropdown';
+import { db } from '../config/FirebaseConfig';
+import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, getDocs, limit, orderBy } from "firebase/firestore";
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function RegisterSciencist() {
-    const [form, setForm] = useState({
-        email: '',
-        password: '',
-        username: '',
-        confirmPassword: '',
-        about: '',
+  const [form, setForm] = useState({
+    email: '',
+    login: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    about: '',
+  });
 
-    });
-    const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
 
-
-    const data = [
-        { label: 'Biotechnology', value: 'biotech' },
-        { label: 'Artificial Intelligence', value: 'ai' },
-        { label: 'Blockchain', value: 'blockchain' },
-        { label: 'Programing', value: 'nano' },
-        { label: 'Quantum Computing', value: 'quantum' },
-    ];
-
-    return (
-        <Container>
-            <InnerContainer>
-                <KeyboardAwareScrollView>
-                    <Header>
-                        <HeaderImg
-                            alt="Logo"
-                            resizeMode="contain"
-                            source={require('../assets/images/letter-b.gif')}
-                        />
-                        <Title>
-                            Sign up to <Title style={{ color: '#4acacd' }}>Binder</Title>
-                        </Title>
-                        <Subtitle>The place where Innovation meets Investmen</Subtitle>
-                    </Header>
-
-                    <Form>
-                        {}
-                        <InputRow>
-                            <InputGroupHalf>
-                                <InputLabel>Email address</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    keyboardType="email-address"
-                                    onChangeText={email => setForm({ ...form, email })}
-                                    placeholder="john@example.com"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.email}
-                                />
-                            </InputGroupHalf>
-
-                            <InputGroupHalf>
-                                <InputLabel>Username</InputLabel>
-                                <InputControl
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={username => setForm({ ...form, username: username })}
-                                    placeholder="DanyCaramba"
-                                    placeholderTextColor="#6b7280"
-                                    value={form.username}
-                                />
-                            </InputGroupHalf>
-                        </InputRow>
-
-                        <InputRow>
-                            <InputGroupHalf>
-                                <InputLabel>Password</InputLabel>
-                                <InputControl
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={password => setForm({ ...form, password })}
-                                    placeholder="************"
-                                    placeholderTextColor="#6b7280"
-                                    secureTextEntry
-                                    value={form.password}
-                                />
-                            </InputGroupHalf>
-
-                            <InputGroupHalf>
-                                <InputLabel>Confirm Password</InputLabel>
-                                <InputControl
-                                    autoCorrect={false}
-                                    clearButtonMode="while-editing"
-                                    onChangeText={confirmPassword => setForm({ ...form, confirmPassword })}
-                                    placeholder="************"
-                                    placeholderTextColor="#6b7280"
-                                    secureTextEntry
-                                    value={form.confirmPassword}
-                                />
-                            </InputGroupHalf>
-                        </InputRow>
-
-                        {/* Dropdown list */}
-                        <InputGroup>
-                            <InputLabel>Areas of Interest</InputLabel>
-                            <MultiSelect
-                                style={styles.dropdown}
-                                data={data}
-                                labelField="label"
-                                valueField="value"
-                                placeholder="Select interests"
-                                value={selected}
-                                onChange={(data: React.SetStateAction<string[]>) => {
-                                    setSelected(data); 
-                                }}
-                                selectedStyle={styles.selectedStyle}
-                            />
-                        </InputGroup>
-
-                        <InputGroup>
-                            <InputLabel>About You</InputLabel>
-                            <TextArea
-                                multiline
-                                numberOfLines={4}
-                                placeholder="Tell us a bit about yourself..."
-                                placeholderTextColor="#6b7280"
-                                onChangeText={about => setForm({ ...form, about })}
-                                value={form.about}
-                            />
-                        </InputGroup>
+  const data = [
+    { label: 'Biotechnology', value: 'biotech' },
+    { label: 'Artificial Intelligence', value: 'ai' },
+    { label: 'Blockchain', value: 'blockchain' },
+    { label: 'Programming', value: 'programming' },
+    { label: 'Quantum Computing', value: 'quantum' },
+  ];
 
 
-                        {}
-                        <FormAction>
-                            <Button onPress={() => router.push('/(tabs)/home')}>
-                                <ButtonText>Sign up</ButtonText>
-                            </Button>
-                        </FormAction>
 
-                        <FormLink />
-                    </Form>
-                </KeyboardAwareScrollView>
 
-                <TouchableOpacity onPress={() => { }}>
-                    <FormFooter>
-                        You have an account?
-                        <SignUpLink>
-                            <Link href="/Login">
-                                Sign in
-                            </Link>
-                        </SignUpLink>
-                    </FormFooter>
-                </TouchableOpacity>
-            </InnerContainer>
-        </Container>
-    );
+  async function addUserWithIncrement() {
+    try {
+      // Reference to the "scientist" collection
+      const scientistRef = collection(db, "users");
+  
+      // Query to get the document with the highest 'id'
+      const highestIdQuery = query(scientistRef, orderBy("id", "desc"), limit(1));
+      const querySnapshot = await getDocs(highestIdQuery);
+  
+      let newId = 1; // Default to 1 if no documents exist
+      if (!querySnapshot.empty) {
+        const highestDoc = querySnapshot.docs[0];
+        newId = highestDoc.data().id + 1; // Increment the highest 'id'
+      }
+  
+      await setDoc(doc(scientistRef, newId.toString()), {
+        id: newId,
+        email: form.email,
+        login: form.login,
+        password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        about: form.about,
+        userType: 'Scientist',
+        tags: selected,
+        joinDate: serverTimestamp(), // Add timestamp for join date
+      });
+  
+      console.log("Scientist added with ID:", newId);
+      Alert.alert("Success", "Scientist account created!");
+    } catch (e) {
+      console.error("Error adding scientist with incremented ID:", e);
+      Alert.alert("Error", "Failed to create scientist account.");
+    }
+  }
+
+  return (
+    <Container>
+      <InnerContainer>
+        <KeyboardAwareScrollView>
+          <Header>
+            <HeaderImg
+              alt="Logo"
+              resizeMode="contain"
+              source={require('../assets/images/letter-b.gif')}
+            />
+            <Title>
+              Sign up to <Title style={{ color: '#4acacd' }}>Binder</Title>
+            </Title>
+            <Subtitle>The place where Innovation meets Investment</Subtitle>
+          </Header>
+
+          <Form>
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>Email address</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  onChangeText={email => setForm({ ...form, email })}
+                  placeholder="john@example.com"
+                  value={form.email}
+                />
+              </InputGroupHalf>
+
+              <InputGroupHalf>
+                <InputLabel>Username</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={login => setForm({ ...form, login })}
+                  placeholder="DanyCaramba"
+                  value={form.login}
+                />
+              </InputGroupHalf>
+            </InputRow>
+
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>First Name</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={firstName => setForm({ ...form, firstName })}
+                  placeholder="John"
+                  value={form.firstName}
+                />
+              </InputGroupHalf>
+
+              <InputGroupHalf>
+                <InputLabel>Last Name</InputLabel>
+                <InputControl
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={lastName => setForm({ ...form, lastName })}
+                  placeholder="Doe"
+                  value={form.lastName}
+                />
+              </InputGroupHalf>
+            </InputRow>
+
+            <InputRow>
+              <InputGroupHalf>
+                <InputLabel>Password</InputLabel>
+                <InputControl
+                  autoCorrect={false}
+                  secureTextEntry
+                  onChangeText={password => setForm({ ...form, password })}
+                  placeholder="************"
+                  value={form.password}
+                />
+              </InputGroupHalf>
+
+              <InputGroupHalf>
+                <InputLabel>Confirm Password</InputLabel>
+                <InputControl
+                  autoCorrect={false}
+                  secureTextEntry
+                  onChangeText={confirmPassword => setForm({ ...form, confirmPassword })}
+                  placeholder="************"
+                  value={form.confirmPassword}
+                />
+              </InputGroupHalf>
+            </InputRow>
+
+            <InputGroup>
+              <InputLabel>Areas of Interest</InputLabel>
+              <MultiSelect
+                style={styles.dropdown}
+                data={data}
+                labelField="label"
+                valueField="value"
+                placeholder="Select interests"
+                value={selected}
+                onChange={data => setSelected(data)}
+                selectedStyle={styles.selectedStyle}
+              />
+            </InputGroup>
+
+            <InputGroup>
+              <InputLabel>About You</InputLabel>
+              <TextArea
+                multiline
+                placeholder="Tell us a bit about yourself..."
+                onChangeText={about => setForm({ ...form, about })}
+                value={form.about}
+              />
+            </InputGroup>
+
+            <FormAction>
+              <Button onPress={addUserWithIncrement}>
+                <ButtonText>Sign up</ButtonText>
+              </Button>
+            </FormAction>
+          </Form>
+        </KeyboardAwareScrollView>
+
+        <TouchableOpacity onPress={() => { }}>
+          <FormFooter>
+            You have an account? <SignUpLink><Link href="/Login">Sign in</Link></SignUpLink>
+          </FormFooter>
+        </TouchableOpacity>
+      </InnerContainer>
+    </Container>
+  );
 }
 
 

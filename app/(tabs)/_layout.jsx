@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors } from './../../constants/Colors';
 import { nodeModuleNameResolver } from 'typescript';
+//import "../../global.css"
 
 const CircleIcon = ({ color, children }) => {
   return (
@@ -60,7 +61,7 @@ export default function TabLayout() {
         }} 
       />
       <Tabs.Screen 
-        name='chat'
+        name='ChatScreen'
         options={{
           title: 'CHAT',
           headerShown: false,
@@ -82,6 +83,7 @@ export default function TabLayout() {
             </CircleIcon>
           ),
         }} 
+        
       />
     </Tabs>
   );

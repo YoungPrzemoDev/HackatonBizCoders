@@ -1,31 +1,65 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, Dimensions, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 import { Link, router } from 'expo-router';
 import { MultiSelect } from 'react-native-element-dropdown';  // Import dropdown component
+import firebase from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import { db } from '../config/FirebaseConfig';
+import { doc, getDoc, getDocs, increment, limit, orderBy, query, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore"; 
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore"; 
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function RegisterSciencist() {
     const [form, setForm] = useState({
         email: '',
-        password: '',
-        username: '',
+        login: '',
+        password:'',
         confirmPassword: '',
+        firstName:'',
+        lastName:'',
         about: '',
+        joinDate:'',
 
     });
-    const [selected, setSelected] = useState<string[]>([]);
+ 
 
-
-    const data = [
-        { label: 'Biotechnology', value: 'biotech' },
-        { label: 'Artificial Intelligence', value: 'ai' },
-        { label: 'Blockchain', value: 'blockchain' },
-        { label: 'Programing', value: 'nano' },
-        { label: 'Quantum Computing', value: 'quantum' },
-    ];
+    async function addUserWithIncrement() {
+      try {
+        const userRef = collection(db, "users");
+    
+        // Query to find the document with the highest 'id'
+        const highestIdQuery = query(userRef, orderBy("id", "desc"), limit(1));
+        const querySnapshot = await getDocs(highestIdQuery);
+    
+        let newId = 1; // Default to 1 if no documents are found
+        if (!querySnapshot.empty) {
+          const highestDoc = querySnapshot.docs[0];
+          newId = highestDoc.data().id + 1; // Increment the highest 'id'
+        }
+    
+        await setDoc(doc(userRef, newId.toString()), {
+          id: newId,
+          email: form.email,
+          login: form.login,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          about: form.about,
+          userType: 'Businessman',
+          joinDate: serverTimestamp(),
+        });
+    
+        console.log("User added with ID:", newId);
+      } catch (e) {
+        console.error("Error adding user with incremented ID:", e);
+      }
+    }
+    
 
     return (
         <Container>
@@ -66,10 +100,38 @@ export default function RegisterSciencist() {
                                     autoCapitalize="none"
                                     autoCorrect={false}
                                     clearButtonMode="while-editing"
-                                    onChangeText={username => setForm({ ...form, username: username })}
+                                    onChangeText={login => setForm({ ...form, login })}
                                     placeholder="DanyCaramba"
                                     placeholderTextColor="#6b7280"
-                                    value={form.username}
+                                    value={form.login}
+                                />
+                            </InputGroupHalf>
+                        </InputRow>
+
+                        <InputRow>
+                            <InputGroupHalf>
+                                <InputLabel>First Name</InputLabel>
+                                <InputControl
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    clearButtonMode="while-editing"
+                                    onChangeText={firstName => setForm({ ...form, firstName })}
+                                    placeholder="John"
+                                    placeholderTextColor="#6b7280"
+                                    value={form.firstName}
+                                />
+                            </InputGroupHalf>
+
+                            <InputGroupHalf>
+                                <InputLabel>Last Name</InputLabel>
+                                <InputControl
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    clearButtonMode="while-editing"
+                                    onChangeText={lastName => setForm({ ...form, lastName })}
+                                    placeholder="DanyCaramba"
+                                    placeholderTextColor="#6b7280"
+                                    value={form.lastName}
                                 />
                             </InputGroupHalf>
                         </InputRow>
@@ -115,7 +177,7 @@ export default function RegisterSciencist() {
                         </InputGroup>
 
                         <FormAction>
-                            <Button onPress={() => router.push('/(tabs)/home')}>
+                            <Button onPress={addUserWithIncrement}>
                                 <ButtonText>Sign up</ButtonText>
                             </Button>
                         </FormAction>
