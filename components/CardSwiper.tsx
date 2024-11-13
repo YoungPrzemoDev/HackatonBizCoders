@@ -1,5 +1,13 @@
 import { db } from "@/config/FirebaseConfig";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView,
@@ -15,81 +23,51 @@ import {
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { fetchProjects,ProjectData } from "../services/FirebaseService";
+import { fetchProjects, ProjectData } from "../services/FirebaseService";
 import { getRecommendation } from "../services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from 'axios';
+import axios from "axios";
 const { height, width } = Dimensions.get("window");
 
+export const joinGroup = async (projectId: string, userId: string) => {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    await updateDoc(projectRef, {
+      members: arrayUnion(userId),
+    });
+    console.log(`User ${userId} added to project ${projectId}`);
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
 
+const fetchCurrentUserId = async () => {
+  const auth = getAuth();
+  const currentUserId = await AsyncStorage.getItem("userId");
+  console.log("Fetched currentUserId:", currentUserId);
+  return currentUserId || auth.currentUser?.uid || null;
+};
 
-// interface ProjectData {
-//   name: string;
-//   description: string;
-//   id: string;
-//   keyPartners: string;
-//   keyActivities: string;
-//   keyResources: string;
-//   valuePropositions: string;
-//   customerRelationships: string;
-//   channels: string;
-//   customerSegments: string;
-//   costStructure: string;
-//   revenueStreams: string;
-//   createdAt: Date;
-//   userId: string;
-//   image: string; // New field
-//   matchPercentage: string; // New field
-// }
+const handleJoinGroup = async (cardId: string) => {
+  const currentUserId = await fetchCurrentUserId();
+  console.log("currentUserId:", currentUserId);
+  console.log("cardId:", cardId);
 
-//let data: ProjectData[] = [];
-let dataLoaded = false;
+  if (!currentUserId || !cardId) {
+    console.error("Missing user ID or card ID");
+    return;
+  }
 
-// const fetchProjectsOutsideComponent = async () => {
-//   try {
-//     const querySnapshot = await getDocs(collection(db, "projects"));
-    
-//     // const response = await axios.get(`http:localhost/recommendation`, {
-//     //   params: { userId },  // For query parameter
-//     // });
-//     // console.log("Fetched numbers array:", response.data); 
-//     const userId = await AsyncStorage.getItem('userId');
-//     console.log("user o id:::: ", userId)
-//     const projectList: ProjectData[] = [];
-    
-//     querySnapshot.forEach((doc) => {
-//       const docData = doc.data();
-//       projectList.push({
-//         name: docData.name,
-//         description: docData.description,
-//         id: doc.id,
-//         keyPartners: docData.keyPartners,
-//         keyActivities: docData.keyActivities,
-//         keyResources: docData.keyResources,
-//         valuePropositions: docData.valuePropositions,
-//         customerRelationships: docData.customerRelationships,
-//         channels: docData.channels,
-//         customerSegments: docData.customerSegments,
-//         costStructure: docData.costStructure,
-//         revenueStreams: docData.revenueStreams,
-//         createdAt: docData.createdAt.toDate(),
-//         userId: docData.userId,
-//         image: docData.image , // Handle the new field
-//         matchPercentage: docData.matchPercentage || '', // Handle the new field
-//       });
-//     });
-
-//     data = projectList; // Assign fetched data to the global variable
-//    // console.log("Dane pobrane z data:", data);
-//     dataLoaded = true;
-//   } catch (error) {
-//     console.error("Error fetching projects outside component:", error);
-//   }
-// };
-
-// fetchProjectsOutsideComponent();
-
+  const success = await joinGroup(cardId, currentUserId);
+  if (success) {
+    console.log("User successfully joined the group!");
+  } else {
+    console.error("Failed to join the group");
+  }
+};
 
 const getCardStyle = (cardIndex, animations) => {
   const animatedScale = animations[cardIndex].scale;
@@ -115,18 +93,15 @@ const getCardStyle = (cardIndex, animations) => {
   };
 };
 
-const Card = ({ card, cardIndex, onPress, animations,projectId }) => {
-
+const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
 
-console.log("main",cardIndex);
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <CardContainer style={getCardStyle(cardIndex, animations)}>
         <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
-      
           <CardTitle>{card.name}</CardTitle>
           <CardDescription>{card.description}</CardDescription>
         </CardDetails>
@@ -141,30 +116,32 @@ const CardSwiper = () => {
   //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState<ProjectData[]>([]);
   const [data, setData] = useState<ProjectData[]>([]);
-  
+
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
 
-
   const [animations, setAnimations] = useState([]);
 
-  console.log("Jestem w swiper")
-  
+  console.log("Jestem w swiper");
+
   useEffect(() => {
     // Fetch projects when the component mounts
     const fetchData = async () => {
       try {
-        const userId = await AsyncStorage.getItem('userId');
+        const userId = await AsyncStorage.getItem("userId");
         console.log(userId);
         const recommendation = await getRecommendation(userId);
         console.log(recommendation);
         console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
-        const fetchedData : ProjectData[] =await fetchProjects();
+        const fetchedData: ProjectData[] = await fetchProjects();
         //useState(data); // Set fetched data as visible cards
         //console.log(fetchedData)
-        //sortowanie 
-        console.log("Before sorting:", fetchedData.map(item => item.id));
-        
+        //sortowanie
+        console.log(
+          "Before sorting:",
+          fetchedData.map((item) => item.id)
+        );
+
         const sortedData = await Promise.all(
           fetchedData.map(async (item) => {
             // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
@@ -172,34 +149,34 @@ const CardSwiper = () => {
             return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
           })
         );
-        
+
         // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
         sortedData.sort((a, b) => a.index - b.index);
         const finalSortedData = sortedData.map(({ index, ...item }) => item);
 
         for (let index = 0; index < finalSortedData.length; index++) {
           const element = finalSortedData[index];
-          console.log("ID:",element.id);
-          console.log("Tittle",element.name);
-          console.log("Key partners:",element.keyPartners);
-          console.log("------------------------------------------")
-          
+          console.log("ID:", element.id);
+          console.log("Tittle", element.name);
+          console.log("Key partners:", element.keyPartners);
+          console.log("------------------------------------------");
         }
-         console.log("After sorting:", finalSortedData.map(item => item.id));
+        console.log(
+          "After sorting:",
+          finalSortedData.map((item) => item.id)
+        );
 
         ////////
         setData(finalSortedData);
         setVisibleCards(finalSortedData);
         //console.log(sortedData);
-        
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
       }
     };
     fetchData();
   }, []);
-  
-  
+
   useEffect(() => {
     if (data.length > 0) {
       setAnimations(
@@ -210,15 +187,6 @@ const CardSwiper = () => {
       );
     }
   }, [data]);
-
-  
-
-  // const animations = useRef(
-  //   data.map(() => ({
-  //     scale: new Animated.Value(0.75),
-  //     borderRadius: new Animated.Value(30),
-  //   }))
-  // ).current;
 
   const resetAllAnimations = () => {
     animations.forEach((anim) => {
@@ -255,11 +223,11 @@ const CardSwiper = () => {
       setExpandedImage(null);
     });
   };
-  
+
   const toggleExpandCard = (cardIndex: number) => {
-    console.log("INdex przekazywany z karty!!!",cardIndex)
+    console.log("INdex przekazywany z karty!!!", cardIndex);
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
-    console.log("222INdex przekazywany z karty!!!",cardIndex)
+    console.log("222INdex przekazywany z karty!!!", cardIndex);
     const card = data[cardIndex];
     console.log(card);
     const selectedCardId = card.id;
@@ -278,11 +246,11 @@ const CardSwiper = () => {
       }),
     ]).start(() => {
       setExpandedCardId(isExpanded ? null : callCount);
-        console.log("Liczba wywołań toggleExpandCard:", callCount);
+      console.log("Liczba wywołań toggleExpandCard:", callCount);
     });
   };
 
-  const handleCardSwipe = (cardIndex:  number) => {
+  const handleCardSwipe = (cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
     setVisibleCards((currentCards) =>
@@ -291,22 +259,20 @@ const CardSwiper = () => {
 
     callCount += 1;
   };
-const [selectedItem, setSelectedItem] = useState(null);
-  const handleSelectItem = (item) => {
-    setSelectedItem(item);
-  };
 
-  const ImageList = ({ cardIndex, onBackPress }) => {
-
-     console.log("INdexxxxxxxx w imagelist:",cardIndex);
-     const selectedCard = data[cardIndex];
+  const ImageList = ({
+    cardIndex,
+    onBackPress,
+  }: {
+    cardIndex: number;
+    onBackPress: () => void;
+  }) => {
+    console.log("INdexxxxxxxx w imagelist:", cardIndex);
+    const selectedCard = data[cardIndex];
     // console.log("ID:",selectedCard.id);
     // console.log("Tittle",selectedCard.name);
     // console.log("Key partners:",selectedCard.keyPartners);
     // console.log("------------------------------------------")
-
-
-
 
     // console.log("ImageList",cardIndex);
     // console.log("IDX",selectedCard.id);
@@ -342,73 +308,71 @@ const [selectedItem, setSelectedItem] = useState(null);
           </TouchableWithoutFeedback>
         ) : (
           <>
-          
-
-
-    
             <MainContainer2>
               <TopContainer>
-              <NameText>{selectedCard.name}</NameText>
+                <NameText>{selectedCard.name}</NameText>
               </TopContainer>
               <StyledScrollView>
-                  <InfoContainer>
-                    <TitleText>Key partners </TitleText>
-                    <SectionText> {selectedCard.keyPartners} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Key activities </TitleText>
-                    <SectionText> {selectedCard.keyActivities} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Key resources </TitleText>
-                    <SectionText> {selectedCard.keyResources} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Value proposition </TitleText>
-                    <SectionText> {selectedCard.valuePropositions} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Customer relationships </TitleText>
-                    <SectionText> {selectedCard.customerRelationships} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Chanels </TitleText>
-                    <SectionText> {selectedCard.channels} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Customer segments </TitleText>
-                    <SectionText> {selectedCard.customerSegments} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Cost structure </TitleText>
-                    <SectionText> {selectedCard.costStructure} </SectionText>
-                  </InfoContainer>
-                  <InfoContainer>
-                    <TitleText>Revenue Streams </TitleText>
-                    <SectionText> {selectedCard.revenueStreams} </SectionText>
-                  </InfoContainer>
-
-             </StyledScrollView>
-             
-            
-  
+                <InfoContainer>
+                  <TitleText>Key partners </TitleText>
+                  <SectionText> {selectedCard.keyPartners} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Key activities </TitleText>
+                  <SectionText> {selectedCard.keyActivities} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Key resources </TitleText>
+                  <SectionText> {selectedCard.keyResources} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Value proposition </TitleText>
+                  <SectionText> {selectedCard.valuePropositions} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Customer relationships </TitleText>
+                  <SectionText>
+                    {" "}
+                    {selectedCard.customerRelationships}{" "}
+                  </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Chanels </TitleText>
+                  <SectionText> {selectedCard.channels} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Customer segments </TitleText>
+                  <SectionText> {selectedCard.customerSegments} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Cost structure </TitleText>
+                  <SectionText> {selectedCard.costStructure} </SectionText>
+                </InfoContainer>
+                <InfoContainer>
+                  <TitleText>Revenue Streams </TitleText>
+                  <SectionText> {selectedCard.revenueStreams} </SectionText>
+                </InfoContainer>
+              </StyledScrollView>
             </MainContainer2>
-             
+
             <StyledButton onPress={onBackPress}>
               <StyledButtonText>Wróć do kart</StyledButtonText>
             </StyledButton>
-
-
-
           </>
         )}
       </>
     );
   };
 
+  const [currentCardID, setCurrentCardID] = useState("");
   const [showOverlay, setShowOverlay] = useState(false);
 
   const handleRightSwipe = (cardIndex: number) => {
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+
+    const projectId = visibleCards[cardIndex].id;
+    setCurrentCardID(projectId);
+
     handleCardSwipe(cardIndex);
     setShowOverlay(true);
     animateButtons();
@@ -420,8 +384,8 @@ const [selectedItem, setSelectedItem] = useState(null);
   };
 
   const [textAnimations, setTextAnimations] = useState([
-    new Animated.Value(-100), // Start off-screen to the left
-    new Animated.Value(-100),
+    new Animated.Value(-width),
+    new Animated.Value(-width),
   ]);
 
   const [buttonAnimations, setButtonAnimations] = useState([
@@ -434,7 +398,7 @@ const [selectedItem, setSelectedItem] = useState(null);
     buttonAnimations.forEach((anim) => anim.setValue(width));
 
     // Reset text opacity and position
-    textAnimations.forEach((anim) => anim.setValue(0));
+    textAnimations.forEach((anim) => anim.setValue(-width));
   };
 
   const animateButtons = () => {
@@ -447,7 +411,7 @@ const [selectedItem, setSelectedItem] = useState(null);
       }).start(() => {
         Animated.timing(textAnimations[index], {
           toValue: 1,
-          duration: 500,
+          duration: 200,
           useNativeDriver: true,
         }).start();
       });
@@ -455,12 +419,11 @@ const [selectedItem, setSelectedItem] = useState(null);
   };
 
   return (
-   
     <MainContainer>
       {visibleCards.length > 0 ? (
         expandedCardId !== null ? (
           <ImageList
-            cardIndex={expandedCardId }//tu sie podaje numer projektu id a nie index i zmienia sie indeks
+            cardIndex={expandedCardId} //tu sie podaje numer projektu id a nie index i zmienia sie indeks
             onBackPress={() => {
               resetAllAnimations();
               setExpandedCardId(null);
@@ -478,11 +441,8 @@ const [selectedItem, setSelectedItem] = useState(null);
                   cardIndex={cardIndex}
                   animations={animations}
                   onPress={() => toggleExpandCard(cardIndex)}
-                  
                 />
-                
               )}
-              
               stackSize={3}
               backgroundColor={"#eeeff0"}
               verticalSwipe={false}
@@ -497,7 +457,6 @@ const [selectedItem, setSelectedItem] = useState(null);
             {showOverlay && (
               <OverlayContainer>
                 <ButtonContainer>
-                  {/* Button 1: Join the group */}
                   <Animated.View
                     style={{
                       flexDirection: "row",
@@ -508,7 +467,9 @@ const [selectedItem, setSelectedItem] = useState(null);
                   >
                     <RoundButtonContainer
                       onPress={() => {
-                        console.log("Dane pobrane z data:");
+                        console.log("Join the group");
+                        console.log(currentCardID);
+                        handleJoinGroup(currentCardID);
                         closeOverlay();
                       }}
                     >
@@ -520,7 +481,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                           {
                             translateX: textAnimations[0].interpolate({
                               inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
+                              outputRange: [-width, 0],
                             }),
                           },
                         ],
@@ -530,7 +491,6 @@ const [selectedItem, setSelectedItem] = useState(null);
                     </AnimatedText>
                   </Animated.View>
 
-                  {/* Button 2: Add to favorites */}
                   <Animated.View
                     style={{
                       flexDirection: "row",
@@ -542,6 +502,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                     <RoundButtonContainer
                       onPress={() => {
                         console.log("Add to favorites");
+                        console.log(currentCardID);
                         closeOverlay();
                       }}
                     >
@@ -553,7 +514,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                           {
                             translateX: textAnimations[1].interpolate({
                               inputRange: [0, 1],
-                              outputRange: [-width, 0], // Slide in from the right
+                              outputRange: [-width, 0],
                             }),
                           },
                         ],
@@ -575,10 +536,9 @@ const [selectedItem, setSelectedItem] = useState(null);
 };
 
 export default CardSwiper;
-function setVisibleCards(projectData: { id: string; }[]) {
+function setVisibleCards(projectData: { id: string }[]) {
   throw new Error("Function not implemented.");
 }
-
 
 const StyledText = styled.Text`
   color: red;
@@ -592,60 +552,55 @@ const StyledText = styled.Text`
 const MainContainer = styled.View`
   flex: 1;
   background-color: white;
- justify-content: center;
+  justify-content: center;
 `;
 
-const MainContainer2 = styled.View` 
- flex:1;
- background-color: #eeeff0;
- align-items: center;
- justify-content: center;
+const MainContainer2 = styled.View`
+  flex: 1;
+  background-color: #eeeff0;
+  align-items: center;
+  justify-content: center;
 `;
 
-const TopContainer = styled.View` 
- background-color: #eeeff0;
- align-items: center;
- justify-content: center;
+const TopContainer = styled.View`
+  background-color: #eeeff0;
+  align-items: center;
+  justify-content: center;
 `;
 const StyledScrollView = styled.ScrollView.attrs(() => ({
   contentContainerStyle: {
-    alignItems: 'center', 
-    justifyContent: 'center', 
+    alignItems: "center",
+    justifyContent: "center",
     paddingBottom: 80,
     paddingTop: 35,
-  
   },
 }))`
   flex: 1;
-background-color: #eeeff0;
-
-
+  background-color: #eeeff0;
 `;
 
-
 const InfoContainer = styled.View`
-justify-content: center;
- align-items: center;
-width:90%;
-padding:20px;
-background-color: red;
-background-color: #ffffff;
-shadow-color: #000;
-shadow-offset: 0px 2px;
-shadow-opacity: 0.25;
-shadow-radius: 3.84px;
- border-radius:20px;
-  margin-top:15px;
-`
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+  padding: 20px;
+  background-color: red;
+  background-color: #ffffff;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
+  border-radius: 20px;
+  margin-top: 15px;
+`;
 
 const NameText = styled.Text`
   font-size: 38px;
   font-weight: bold;
   text-align: center;
-  margin-top:60px;
-  color:black;
+  margin-top: 60px;
+  color: black;
 `;
-
 
 const DescriptionText = styled.Text`
   font-size: 28spx;
@@ -654,11 +609,11 @@ const DescriptionText = styled.Text`
 `;
 
 const TitleText = styled.Text`
- font-weight: bold;
+  font-weight: bold;
   font-size: 26px;
   text-align: center;
   margin-bottom: 5px;
-  color:black;
+  color: black;
 `;
 
 const SectionText = styled.Text`
