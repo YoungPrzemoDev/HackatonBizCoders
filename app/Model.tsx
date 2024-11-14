@@ -7,128 +7,27 @@ import { ProgressBar, MD3Colors } from 'react-native-paper';
 import styled from 'styled-components/native';
 import { Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { fetchGPTResponse,fetchTagsResponse2 } from './services/gptPromt';
 const screenWidth = Dimensions.get('window').width;
 
-interface StepProps {
-  stepData: string;
-  questions?: string[];
-  onChange: (value: string) => void;
-  value: string;
-}
-
-const initialCanvasState = {
-  name: '',
-  description: '',
-  keyPartners: '',
-  keyActivities: '',
-  keyResources: '',
-  valuePropositions: '',
-  customerRelationships: '',
-  channels: '',
-  customerSegments: '',
-  costStructure: '',
-  revenueStreams: '',
-};
-
-
 const sections = [
-  { label: 'Name', key: 'name', questions: [] },
-  { label: 'Description', key: 'description', questions: [] },
-  {
-    label: 'Key Partners',
-    key: 'keyPartners',
-    questions: [
-      'Who are our key partners?',
-      'Who are our key suppliers?',
-      'Which key resources are we acquiring from partners?',
-      'Which key activities do partners perform?',
-    ],
-  },
-  {
-    label: 'Key Activities',
-    key: 'keyActivities',
-    questions: [
-      'What key activities do our value propositions require?',
-      'Our distribution channels?',
-      'Customer relationships?',
-      'Revenue streams?',
-    ],
-  },
-  {
-    label: 'Key Resources',
-    key: 'keyResources',
-    questions: [
-      'What key resources do our value propositions require?',
-      'Our distribution channels?',
-      'Customer relationships?',
-      'Revenue streams?',
-    ],
-  },
-  {
-    label: 'Value Propositions',
-    key: 'valuePropositions',
-    questions: [
-      'What value do we deliver to the customer?',
-      'Which one of our customer’s problems are we helping to solve?',
-      'What bundles of products and services are we offering to each customer segment?',
-      'Which customer needs are we satisfying?',
-    ],
-  },
-  {
-    label: 'Customer Relationships',
-    key: 'customerRelationships',
-    questions: [
-      'What type of relationship does each of our customer segments expect us to establish and maintain with them?',
-      'Which ones have we established?',
-      'How are they integrated with the rest of our business model?',
-      'How costly are they?',
-    ],
-  },
-  {
-    label: 'Channels',
-    key: 'channels',
-    questions: [
-      'Through which channels do our customer segments want to be reached?',
-      'How are we reaching them now?',
-      'How are our channels integrated?',
-      'Which ones work best?',
-    ],
-  },
-  {
-    label: 'Customer Segments',
-    key: 'customerSegments',
-    questions: [
-      'For whom are we creating value?',
-      'Who are our most important customers?',
-    ],
-  },
-  {
-    label: 'Cost Structure',
-    key: 'costStructure',
-    questions: [
-      'What are the most important costs inherent in our business model?',
-      'Which key resources are most expensive?',
-      'Which key activities are most expensive?',
-    ],
-  },
-  {
-    label: 'Revenue Streams',
-    key: 'revenueStreams',
-    questions: [
-      'For what value are our customers really willing to pay?',
-      'For what do they currently pay?',
-      'How are they currently paying?',
-      'How would they prefer to pay?',
-      'How much does each revenue stream contribute to overall revenues?',
-    ],
-  },
+  { label: 'Name', key: 'name' },
+  { label: 'Description', key: 'description' },
+  { label: 'Overview', key: 'overview' },
+  { label: 'Tags', key: 'tags' },
 ];
+
 const BusinessCanvasScreen: React.FC = () => {
   const [step, setStep] = useState(0);
-  const [canvas, setCanvas] = useState<Record<string, string>>({});
+  const [name, setName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [longDescription, setLongDescription] = useState<string>('');
+  const [tags, setTags] = useState<string[]>([]);
+
   const totalSteps = sections.length;
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, totalSteps - 1));
   const prevStep = () => {
@@ -138,11 +37,12 @@ const BusinessCanvasScreen: React.FC = () => {
       setStep((prev) => Math.max(prev - 1, 0));
     }
   };
-  const handleInputChange = (key: string, value: string) => {
-    setCanvas((prev) => ({ ...prev, [key]: value }));
-  };
+
   const handleAddAnother = () => {
-    setCanvas(initialCanvasState); 
+    setName('');
+    setDescription('');
+    setLongDescription('');
+    setTags([]);
     setStep(0);
     setIsSubmitted(false);
   };
@@ -152,7 +52,6 @@ const BusinessCanvasScreen: React.FC = () => {
       const projectRef = collection(db, 'projects');
       const projectQuery = query(projectRef, orderBy('id', 'desc'), limit(1));
       const projectSnap = await getDocs(projectQuery);
-
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         throw new Error("User ID not found in AsyncStorage.");
@@ -167,8 +66,11 @@ const BusinessCanvasScreen: React.FC = () => {
 
       await setDoc(doc(projectRef, newId.toString()), {
         id: newId,
-        userId: userId, 
-        ...canvas,
+        userId: userId,
+        name: name,
+        description: description,
+        longDescription: longDescription,
+        tags: tags,
         createdAt: serverTimestamp(),
         image: 'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg'
       });
@@ -181,34 +83,90 @@ const BusinessCanvasScreen: React.FC = () => {
     }
   };
 
+  const handleGenerateLongDescription = async () => {
+    if (longDescription) {
+      setLoading(true);
+      try {
+        const DescriptionGenerated = await fetchGPTResponse(longDescription);
+        setDescription(DescriptionGenerated);
+      } catch (error) {
+        console.error('Error generating long description:', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert('Warning', 'Please provide a description first.');
+    }
+  };
 
-  const StepComponent: React.FC<StepProps> = React.memo(({ stepData, questions, onChange, value }) => {
-    const [inputValue, setInputValue] = useState(value);
-    const handleBlur = () => {
-      onChange(inputValue);
-    };
-    return (
-      <CenterContainer>
-        <InputContainer>
-          <StepText>{stepData}</StepText>
+  const handleGenerateTags = async () => {
+    if (longDescription) {
+      setLoading2(true);
+      try {
+        const tagsArray = await fetchTagsResponse2(longDescription);
+        setTags(tagsArray);
+      } catch (error) {
+        console.error('Error generating tags:', error);
+      } finally {
+        setLoading2(false);
+      }
+    } else {
+      Alert.alert('Warning', 'Please provide a description first.');
+    }
+  };
+
+  const renderStepComponent = () => {
+    switch (step) {
+      case 0:
+        return (
           <StyledTextInput
-            placeholder={`Enter details for ${stepData}`}
-            value={inputValue}
-            onChangeText={setInputValue}
-            onBlur={handleBlur} 
+            placeholder="Enter project name"
+            value={name}
+            onChangeText={setName}
           />
-        </InputContainer>
-        {questions && questions.length > 0 && (
-          <QuestionsContainer>
-            <QText>These guiding questions aid in defining this section:</QText>
-            {questions.map((question, index) => (
-              <StyledQuestions key={index}>• {question}</StyledQuestions>
-            ))}
-          </QuestionsContainer>
-        )}
-      </CenterContainer>
-    );
-  });
+        );
+      case 1:
+        return (
+          <StyledTextInput
+            placeholder="Enter project description"
+            value={longDescription}
+            onChangeText={setLongDescription}
+          />
+        );
+case 2:
+  return (
+    <>
+      <StyledTextInput
+       // multiline={true}
+        placeholder="Enter or generate an overview. This will be visible on the main page to other users."
+        value={description}
+        onChangeText={setDescription}
+      />
+      <StyledButton onPress={handleGenerateLongDescription} disabled={loading}>
+        <ButtonText>{loading ? 'Generating...' : 'Generate using ChatGPT'}</ButtonText>
+      </StyledButton>
+    </>
+  );
+case 3:
+  return (
+    <>
+      <StyledTextInput
+       // multiline={true}
+        placeholder="Enter tags (separated by commas) or generate them"
+        value={tags.join(', ')}
+        onChangeText={(text) => setTags(text.split(',').map(tag => tag.trim()))}
+      />
+      <StyledButton onPress={handleGenerateTags} disabled={loading2}>
+        <ButtonText>{loading2 ? 'Generating...' : 'Generate Tags'}</ButtonText>
+      </StyledButton>
+    </>
+  );
+      default:
+        return null;
+    }
+  };
+  
+
 
   const progress = (step + 1) / totalSteps;
   const progressPercentage = Math.round(progress * 100);
@@ -223,9 +181,7 @@ const BusinessCanvasScreen: React.FC = () => {
 
             <ButtonsContainer2>
             <StyledButton onPress={() => {
-              setStep(0);
-              setIsSubmitted(false);
-                setCanvas(initialCanvasState); 
+            handleAddAnother();
             }}>
               <ButtonText>Add next</ButtonText>
             </StyledButton>
@@ -246,12 +202,7 @@ const BusinessCanvasScreen: React.FC = () => {
             </ProContainer>
           </UpContainer>
           <DownContainer>
-            <StepComponent
-              stepData={sections[step].label}
-              questions={sections[step].questions}
-              value={canvas[sections[step].key] || ''}
-              onChange={(value) => handleInputChange(sections[step].key, value)}
-            />
+          {renderStepComponent()}
           </DownContainer>
           <ButtonsContainer>
             <StyledButton onPress={prevStep}>
@@ -341,6 +292,7 @@ const MainContainer = styled.View`
   align-items: top;
   width:100%;
   align-items: center;
+  
 
 `;
 
@@ -373,7 +325,7 @@ const DownContainer = styled.View`
   width: 100%;
   min-height: 500px;
   align-items: center;
-
+  justify-content: center;
  
 `;
 

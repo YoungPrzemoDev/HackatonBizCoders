@@ -130,45 +130,45 @@ const CardSwiper = () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         console.log(userId);
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
-        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        // const recommendation = await getRecommendation(userId);
+        // console.log(recommendation);
+        // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
         //useState(data); // Set fetched data as visible cards
         //console.log(fetchedData)
         //sortowanie
-        console.log(
-          "Before sorting:",
-          fetchedData.map((item) => item.id)
-        );
+        // console.log(
+        //   "Before sorting:",
+        //   fetchedData.map((item) => item.id)
+        // );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
         // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
 
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
-        console.log(
-          "After sorting:",
-          finalSortedData.map((item) => item.id)
-        );
+        // for (let index = 0; index < finalSortedData.length; index++) {
+        //   const element = finalSortedData[index];
+        //   console.log("ID:", element.id);
+        //   console.log("Tittle", element.name);
+        //   console.log("Key partners:", element.keyPartners);
+        //   console.log("------------------------------------------");
+        // }
+        // console.log(
+        //   "After sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );
 
         ////////
-        setData(finalSortedData);
-        setVisibleCards(finalSortedData);
+        setData(fetchedData);
+        setVisibleCards(fetchedData);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -314,43 +314,8 @@ const CardSwiper = () => {
               </TopContainer>
               <StyledScrollView>
                 <InfoContainer>
-                  <TitleText>Key partners </TitleText>
-                  <SectionText> {selectedCard.keyPartners} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Key activities </TitleText>
-                  <SectionText> {selectedCard.keyActivities} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Key resources </TitleText>
-                  <SectionText> {selectedCard.keyResources} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Value proposition </TitleText>
-                  <SectionText> {selectedCard.valuePropositions} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer relationships </TitleText>
-                  <SectionText>
-                    {" "}
-                    {selectedCard.customerRelationships}{" "}
-                  </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Chanels </TitleText>
-                  <SectionText> {selectedCard.channels} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer segments </TitleText>
-                  <SectionText> {selectedCard.customerSegments} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Cost structure </TitleText>
-                  <SectionText> {selectedCard.costStructure} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Revenue Streams </TitleText>
-                  <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  <TitleText>Description </TitleText>
+                  <SectionText> {selectedCard.description} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>
