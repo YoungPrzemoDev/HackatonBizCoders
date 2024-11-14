@@ -168,8 +168,8 @@ const CardSwiper = () => {
         );
 
         ////////
-        setData(finalSortedData);
-        setVisibleCards(finalSortedData);
+        setData(fetchedData);
+        setVisibleCards(fetchedData);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -315,43 +315,8 @@ const CardSwiper = () => {
               </TopContainer>
               <StyledScrollView>
                 <InfoContainer>
-                  <TitleText>Key partners </TitleText>
-                  <SectionText> {selectedCard.keyPartners} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Key activities </TitleText>
-                  <SectionText> {selectedCard.keyActivities} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Key resources </TitleText>
-                  <SectionText> {selectedCard.keyResources} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Value proposition </TitleText>
-                  <SectionText> {selectedCard.valuePropositions} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer relationships </TitleText>
-                  <SectionText>
-                    {" "}
-                    {selectedCard.customerRelationships}{" "}
-                  </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Chanels </TitleText>
-                  <SectionText> {selectedCard.channels} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer segments </TitleText>
-                  <SectionText> {selectedCard.customerSegments} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Cost structure </TitleText>
-                  <SectionText> {selectedCard.costStructure} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Revenue Streams </TitleText>
-                  <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  <TitleText>Description </TitleText>
+                  <SectionText> {selectedCard.description} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>
