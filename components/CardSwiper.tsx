@@ -315,7 +315,7 @@ const CardSwiper = () => {
               <StyledScrollView>
                 <InfoContainer>
                   <TitleText>Description </TitleText>
-                  <SectionText> {selectedCard.description} </SectionText>
+                  <SectionText> {selectedCard.longDescription} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>

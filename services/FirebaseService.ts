@@ -1,24 +1,16 @@
 import { db } from "@/config/FirebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, serverTimestamp } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface ProjectData {
+  id: string;
+  userId: string;
   name: string;
   description: string;
-  id: string;
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
+  longDescription: string;
+  tags: string[];
   createdAt: Date;
-  userId: string;
   image: string;
-  matchPercentage: string;
 }
 
 export const fetchProjects = async (): Promise<ProjectData[]> => {
@@ -30,22 +22,14 @@ export const fetchProjects = async (): Promise<ProjectData[]> => {
     querySnapshot.forEach((doc) => {
       const docData = doc.data();
       projectList.push({
-        name: docData.name,
-        description: docData.description,
-        id: doc.id,
-        keyPartners: docData.keyPartners,
-        keyActivities: docData.keyActivities,
-        keyResources: docData.keyResources,
-        valuePropositions: docData.valuePropositions,
-        customerRelationships: docData.customerRelationships,
-        channels: docData.channels,
-        customerSegments: docData.customerSegments,
-        costStructure: docData.costStructure,
-        revenueStreams: docData.revenueStreams,
-        createdAt: docData.createdAt.toDate(),
-        userId: docData.userId,
-        image: docData.image , // Handle the new field
-        matchPercentage: docData.matchPercentage || '',
+        id: doc.id, // or use docData.newId if available
+        userId: docData.userId || userId, // Use fetched or local user ID
+        name: docData.name || '',
+        description: docData.description || '',
+        longDescription: docData.longDescription || '', // New field, add fallback if missing
+        tags: docData.tags || [], // New field, default to empty array if missing
+        createdAt: docData.createdAt ? docData.createdAt.toDate() : serverTimestamp(), // Handle missing timestamp
+        image: docData.image || 'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg', // Default image
       });
     });
     return projectList;
