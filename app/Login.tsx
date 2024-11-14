@@ -12,6 +12,7 @@ import {
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { db } from '@/config/FirebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -42,6 +43,9 @@ export default function Login() {
           if (userData.password === password) {
             userFound = true;
             await AsyncStorage.setItem('userId', doc.id); // Save userId to AsyncStorage
+            await AsyncStorage.setItem('userFirstName', userData.firstName);
+            // await AsyncStorage.setItem('userProfileUrl', userData.profilePicUrl);
+            // await requestAndSaveToken(doc.id);
             Alert.alert("Login Successful", "Welcome back!");
             router.push('/(tabs)/home');
           }

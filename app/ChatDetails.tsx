@@ -7,13 +7,17 @@ import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firesto
 import { Message } from "./interfaces/Message";
 import tw from 'twrnc';
 import { Ionicons } from '@expo/vector-icons';
+import { fetchCurrentUserId } from "@/components/CardSwiper";
+import { BasicUser } from "./interfaces/User";
+import { fetchGiftedUser } from "./services/userServices";
 
 const mockedUserId = "1";
 const mockedUserName = "Dorian";
-const mockedUserAvatar = "https://upload.wikimedia.org/wikipedia/commons/a/a7/Eating_rice%2C_China_-_collected_by_Berthold_Laufer.jpg"
+const userProfilePic = "";
 
 const ChatDetails: React.FC = () => {
   const { chatId, chatName } = useLocalSearchParams();
+  const [user, setUser] = useState<BasicUser | null>(null);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [loadingEarlier, setLoadingEarlier] = useState(false);
@@ -25,6 +29,18 @@ const ChatDetails: React.FC = () => {
       console.log(initialMessages)
       setLastVisible(newLastVisible);
     };
+
+    const loadUser = async () => {
+      try {
+        const userId = await fetchCurrentUserId();
+        const userData: BasicUser = await fetchGiftedUser(userId);
+        setUser(userData);
+      } catch(error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+
+    //loadUser();
     loadInitialMessages();
   }, [chatId]);
 
@@ -103,6 +119,7 @@ const renderBubble = (props: BubbleProps<IMessage>) => (
   />
 );
 
+
   return (
     <View
     className="flex-1 pb-10 pt-16 bg-zinc-800 px-2"
@@ -113,7 +130,7 @@ const renderBubble = (props: BubbleProps<IMessage>) => (
         user={{
           _id: mockedUserId,
           name: mockedUserName,
-          avatar: mockedUserAvatar,
+          avatar: userProfilePic,
         }}
         loadEarlier={true}
         onLoadEarlier={loadEarlierMessages}

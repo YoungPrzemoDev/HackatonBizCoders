@@ -1,6 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; 
+import { getFirestore, doc, setDoc } from "firebase/firestore"; 
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
+
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -18,5 +20,29 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-
 export const db = getFirestore(app);
+
+// const messaging = getMessaging(app);
+
+// export const requestAndSaveToken = async (userId) => {
+//   try {
+//     const token = await getToken(messaging, {
+//       vapidKey: "BK2BD0hqDQCl3uAwlD6SQVNL3Vz0BiEP3ebJL8chcj9EQnXObZCkQeWqjfpn_t8IdnRqTTwwt-uz6us3VjiZoXU"
+//     })
+
+//     if (token) {
+//       console.log("FCM: ", token);
+
+//       await setDoc(
+//         doc(db, "users", userId),
+//         { deviceToken: token },
+//         { merge: true }
+//       );
+//       console.log("Device token saved");
+//     } else {
+//       console.warn("No FCM token recived. Permissions may be denied.");
+//     }
+//   } catch (error) {
+//     console.error("Error retrieving or saving token:", error);
+//   }
+// };

@@ -10,10 +10,10 @@ app = FastAPI()
 
 async def initialize_db():
     db_connection.initialize_firebase()
-    db_connection.initializeJina()
+    #db_connection.initializeJina()
     #db_connection.getDataFromFirebase()
-    global db_milvus
-    db_milvus=db_connection.connect()
+    #global db_milvus
+    #db_milvus=db_connection.connect()
 
 @app.on_event("startup")
 async def startup():

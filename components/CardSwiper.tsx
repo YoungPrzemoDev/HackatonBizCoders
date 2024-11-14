@@ -28,6 +28,7 @@ import { getRecommendation } from "../services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { addNotification } from "@/app/services/notificationService";
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -44,7 +45,7 @@ export const joinGroup = async (projectId: string, userId: string) => {
   }
 };
 
-const fetchCurrentUserId = async () => {
+export const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
   console.log("Fetched currentUserId:", currentUserId);
@@ -61,12 +62,14 @@ const handleJoinGroup = async (cardId: string) => {
     return;
   }
 
-  const success = await joinGroup(cardId, currentUserId);
-  if (success) {
-    console.log("User successfully joined the group!");
-  } else {
-    console.error("Failed to join the group");
-  }
+  // const success = await joinGroup(cardId, currentUserId);
+  // if (success) {
+  //   console.log("User successfully joined the group!");
+  // } else {
+  //   console.error("Failed to join the group");
+  // }
+
+  await addNotification(currentUserId, cardId);
 };
 
 const getCardStyle = (cardIndex, animations) => {
@@ -110,6 +113,7 @@ const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
   );
 };
 let callCount = 0;
+
 const CardSwiper = () => {
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
   const [expandedCardId, setExpandedCardId] = useState<number | null>(null);
@@ -130,45 +134,45 @@ const CardSwiper = () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         console.log(userId);
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
-        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        // const recommendation = await getRecommendation(userId);
+        // console.log(recommendation);
+        // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
         //useState(data); // Set fetched data as visible cards
         //console.log(fetchedData)
         //sortowanie
-        console.log(
-          "Before sorting:",
-          fetchedData.map((item) => item.id)
-        );
+        // console.log(
+        //   "Before sorting:",
+        //   fetchedData.map((item) => item.id)
+        // );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
-        // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
 
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
-        console.log(
-          "After sorting:",
-          finalSortedData.map((item) => item.id)
-        );
+        // for (let index = 0; index < finalSortedData.length; index++) {
+        //   const element = finalSortedData[index];
+        //   console.log("ID:", element.id);
+        //   console.log("Tittle", element.name);
+        //   console.log("Key partners:", element.keyPartners);
+        //   console.log("------------------------------------------");
+        // }
+        // console.log(
+        //   "After sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );
 
         ////////
-        setData(finalSortedData);
-        setVisibleCards(finalSortedData);
+        setData(fetchedData);
+        setVisibleCards(fetchedData);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -679,7 +683,7 @@ const OverlayContainer = styled.View`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   justify-content: center;
 `;
 
@@ -701,17 +705,19 @@ const RoundButtonContainer = styled.TouchableOpacity`
   border-color: #265676;
   justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
   position: relative;
 `;
 
 const AnimatedText = styled(Animated.Text)`
-  color: #87accb;
-  font-size: 20px;
+  color: #5e9ccc;
+  font-size: 30px;
   font-weight: bold;
   text-align: left;
   margin-left: 10px;
-  position: absolute;
-  top: 20px;
-  margin-left: 10px;
+  margin-bottom: 60px;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
 `;
