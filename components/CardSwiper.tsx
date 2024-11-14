@@ -131,10 +131,11 @@ const CardSwiper = () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         console.log(userId);
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
-        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
+
+        //const recommendation = await getRecommendation(userId);
+        //console.log(recommendation);
+        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         //useState(data); // Set fetched data as visible cards
         //console.log(fetchedData)
         //sortowanie
@@ -143,29 +144,29 @@ const CardSwiper = () => {
           fetchedData.map((item) => item.id)
         );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
         // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
 
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
-        console.log(
-          "After sorting:",
-          finalSortedData.map((item) => item.id)
-        );
+        // for (let index = 0; index < finalSortedData.length; index++) {
+        //   const element = finalSortedData[index];
+        //   console.log("ID:", element.id);
+        //   console.log("Tittle", element.name);
+        //   console.log("Key partners:", element.keyPartners);
+        //   console.log("------------------------------------------");
+        // }
+        // console.log(
+        //   "After sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );r
 
         ////////
         setData(fetchedData);
@@ -176,9 +177,6 @@ const CardSwiper = () => {
       }
     };
     fetchData();
-  }, []);
-
-  useEffect(() => {
     if (data.length > 0) {
       setAnimations(
         data.map(() => ({
@@ -186,8 +184,13 @@ const CardSwiper = () => {
           borderRadius: new Animated.Value(30),
         }))
       );
+    }else {
+      setAnimations([]); // Ustaw pustą tablicę, jeśli dane są puste
     }
   }, [data]);
+
+  // useEffect(() => {
+  //   );
 
   const resetAllAnimations = () => {
     animations.forEach((anim) => {
@@ -518,7 +521,7 @@ function setVisibleCards(projectData: { id: string }[]) {
 const StyledText = styled.Text`
   color: red;
   text-align: center;
-  font-size: large;
+  font-size: 20;
   font-weight: bold;
   margin-top: 200px;
   margin-bottom: 60px;

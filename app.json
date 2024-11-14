@@ -12,6 +12,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "newArchEnabled": false,
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-redux"
+        ]
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -27,7 +35,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
