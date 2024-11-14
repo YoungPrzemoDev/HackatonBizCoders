@@ -23,11 +23,12 @@ import {
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { fetchProjects, ProjectData } from "../services/FirebaseService";
+import { fetchProjects, ProjectData, addProjectUser } from "../services/FirebaseService";
 import { getRecommendation } from "../services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -48,7 +49,7 @@ const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
   console.log("Fetched currentUserId:", currentUserId);
-  return currentUserId || auth.currentUser?.uid || null;
+  return currentUserId;
 };
 
 const handleJoinGroup = async (cardId: string) => {
@@ -369,7 +370,7 @@ const CardSwiper = () => {
 
   const handleRightSwipe = (cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
-
+    //jak sie przesunie w prawo i handle left swipe jak to 
     const projectId = visibleCards[cardIndex].id;
     setCurrentCardID(projectId);
 
@@ -450,6 +451,7 @@ const CardSwiper = () => {
               onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
               onSwipedLeft={(cardIndex) => {
                 handleCardSwipe(cardIndex);
+                //!!!POGORSZENIE WEKTORA OSOBY
                 console.log("Left Swipe", cardIndex);
               }}
               onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
@@ -469,7 +471,7 @@ const CardSwiper = () => {
                       onPress={() => {
                         console.log("Join the group");
                         console.log(currentCardID);
-                        handleJoinGroup(currentCardID);
+                        handleJoinGroup(currentCardID);// serce obsluga ze tak
                         closeOverlay();
                       }}
                     >
@@ -500,10 +502,18 @@ const CardSwiper = () => {
                     }}
                   >
                     <RoundButtonContainer
-                      onPress={() => {
+                      onPress={async () => {
                         console.log("Add to favorites");
+                        //Strzał na endpoint i dodanie do uzytkownika projektu 
+                        const userID=await fetchCurrentUserId();
+                        
+                        addProjectUser(currentCardID, userID)
+
+
                         console.log(currentCardID);
-                        closeOverlay();
+                        //tutaj musze wywolac funkcje do obslugi ze nie 
+                        closeOverlay();//szarosc nachodzi zamykanie 
+
                       }}
                     >
                       <Icon name="heart-outline" size={30} color="#fff" />
@@ -679,7 +689,7 @@ const OverlayContainer = styled.View`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   justify-content: center;
 `;
 
@@ -701,17 +711,19 @@ const RoundButtonContainer = styled.TouchableOpacity`
   border-color: #265676;
   justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
   position: relative;
 `;
 
 const AnimatedText = styled(Animated.Text)`
-  color: #87accb;
-  font-size: 20px;
+  color: #5e9ccc;
+  font-size: 30px;
   font-weight: bold;
   text-align: left;
   margin-left: 10px;
-  position: absolute;
-  top: 20px;
-  margin-left: 10px;
+  margin-bottom: 60px;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
 `;

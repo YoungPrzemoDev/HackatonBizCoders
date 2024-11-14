@@ -1,5 +1,5 @@
 import { db } from "@/config/FirebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs,doc,updateDoc,arrayUnion } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface ProjectData {
@@ -52,5 +52,19 @@ export const fetchProjects = async (): Promise<ProjectData[]> => {
   } catch (error) {
     console.error("Error fetching projects:", error);
     return [];
+  }
+};
+
+export const addProjectUser = async (projectId: string, userId: string) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      projects: arrayUnion(projectId),
+    });
+    console.log(`Added project  to user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("Error adding project to user:", error);
+    return false;
   }
 };

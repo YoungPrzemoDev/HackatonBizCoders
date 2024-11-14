@@ -119,7 +119,12 @@ def createEmbedding(texts):
     #     print("#########################################")
     print(embeddings)
     return embeddings  #it returns [model1[0.....8],model2[0....8],...,modeln[0.....8]] macierz n wierszy na 9 kolumn 
-
+def createSingleEmbedd(text):
+    print("########single embede")
+    embeddings=[]
+    embeddings.append(ef(text))
+    print(embeddings[0])
+    return embeddings
 
 def newCollection(inserted_rows,userId):
     dbSchema.createIndex(inserted_rows,userId)

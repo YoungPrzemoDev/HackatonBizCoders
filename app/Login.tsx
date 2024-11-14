@@ -12,7 +12,7 @@ import {
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { db } from '@/config/FirebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import {sendUser} from '../services/RecommenadtionService'
 const screenWidth = Dimensions.get('window').width;
 
 export default function Login() {
@@ -43,6 +43,7 @@ export default function Login() {
             userFound = true;
             await AsyncStorage.setItem('userId', doc.id); // Save userId to AsyncStorage
             Alert.alert("Login Successful", "Welcome back!");
+            const sendRequest=sendUser(doc.id);
             router.push('/(tabs)/home');
           }
         });
