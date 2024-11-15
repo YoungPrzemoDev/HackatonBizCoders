@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export interface ProjectData {
   name: string;  // np. "Green Energy Initiative"
   description: string;  // np. "Revolutionizing energy..."
-  id: number;  // np. 2
+  id: string;  // np. 2
   createdAt: Date;  // Zmienna typu Date, przekształcamy timestamp na Date
   userId: number;  // np. 2
   image: string;  // np. "https://example.com/sample-image-green.jpg"

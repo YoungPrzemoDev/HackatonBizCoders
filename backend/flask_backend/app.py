@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from typing import List
 from models import Interraction
-import dbSchemaUser
+import dbSchemaUser,dbSchema
 #TESTID="5"
 
 
@@ -42,10 +42,33 @@ async def get_recommendation(userId):
     return recommendation
 
 @app.post("/userInteraction/")
-async def changeUserVector(interraction: Interraction):
-    print(dbSchemaUser.findAboutById("5"))
-    print(dbSchemaUser.findVectorById("5"))
+async def changeUserVector(interaction: Interraction):
+    print("INTERAKCJA")
+    print(interaction.userId)
+    print(interaction.projectID)
+    #wyciagnac user vector 
+    user_vector=dbSchemaUser.findVectorById(interaction.userId)
+    #wyciagnac project vector
+    vector_long_description=dbSchema.getDocumentwithProjectEmbed(interaction.userId,interaction.projectID)
+    # dodac do siebie
+    new_user_vector=dbSchema.calculateNewUserVector(user_vector,vector_long_description)
+    # zaktualizowac user vectoor
+    dbSchemaUser.updateUserVector(new_user_vector,interaction.userId)
+
+
+
+
+
+    # print(dbSchemaUser.findAboutById("5"))
+    # print(dbSchemaUser.findVectorById("5"))
     return {"OK"}
+# @app.get("/test")
+# def test():
+#     print(dbSchemaUser.findAboutById("5"))
+#     return "OK"
+
+
+
 
 @app.post("/about/{userId}")
 async def embedding(userId):

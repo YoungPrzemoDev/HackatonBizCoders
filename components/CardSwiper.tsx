@@ -684,11 +684,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ImageBackground,StyleSheet } from 'react-native';
 import TinderCard from 'react-tinder-card';  // Upewnij się, że masz odpowiednią bibliotekę zainstalowaną
-import { db } from "@/config/FirebaseConfig";
 import CustomAlert from './CustomAlert';  // Twój komponent modala
 import { fetchProjects,ProjectData } from "../services/FirebaseService";
-import {  Alert } from 'react-native';
+import { getRecommendation, sendInterraction } from '@/services/RecommenadtionService';
 import CardStyles from '../constants/CardSwiperStyle'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserInteraction } from '@/app/interfaces/User';
 //style w pliku '../constants/CardSwiperStyle'
 //po przesunieciu w prawo CustomAlert
 function CardSwiper() {
@@ -696,17 +697,40 @@ function CardSwiper() {
   const [lastDirection, setLastDirection] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
   const [data, setData] = useState<ProjectData[]>([]);
+  const [userID,setUserID] = useState<string>(null);
+  const [loading, setLoading] = useState(false); // Flaga ładowania
+  const INITIAL_CARD_COUNT = 4;
+  let counter=0;
     //     // Fetch projects when the component mounts
     useEffect(() => {
         const fetchData = async () => {
           try {
-           // const userId = await AsyncStorage.getItem("userId");
-          //  console.log(userId);
-            // const recommendation = await getRecommendation(userId);
-            // console.log(recommendation);
+           const userId = await AsyncStorage.getItem("userId");
+           setUserID(userId);
+            console.log(userId);
+            const recommendation = await getRecommendation(userId);
+            console.log(recommendation);
             // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
             const fetchedData: ProjectData[] = await fetchProjects();
-            setData(fetchedData);
+            console.log("Before sorting:",fetchedData.map((item) => item.id));
+
+            const sortedData = await Promise.all(
+            fetchedData.map(async (item) => {
+            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+            const index = await recommendation.indexOf(item.id);
+            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+          })
+        );
+
+        sortedData.sort((a, b) => a.index - b.index);
+        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        console.log("After sorting:",finalSortedData.map((item) => item.id));
+
+
+
+
+
+            setData(finalSortedData);
             console.log(fetchedData[0].id)
             //console.log(sortedData);
           } catch (error) {
@@ -716,12 +740,49 @@ function CardSwiper() {
         fetchData();
       }, []);
   // Funkcja obsługująca przesunięcie karty
-  const swiped = (direction: string) => {
+  const swiped = async (direction: string,projectID: string) => {
     setLastDirection(direction);
     if(direction=="right"){
+      console.log("Teraz Otwarty projekt ",projectID);
       setModalVisible(true);
-    }else if (direction=="left"){
+     
+      const project : ProjectData =  data.find((project) => project.id === projectID);
+      const newInteraction: UserInteraction={
+        projectID: project.id,
+        userId: userID
+      }
+      console.log("Pisze co wysyłam",newInteraction);
+      sendInterraction(newInteraction);
+      console.log("wyszukany projekt",project.name);
+      //usuwam projekt wyslany 
+      counter++;
+      console.log(counter);
+      if(counter==INITIAL_CARD_COUNT){
+        //!!tutaj trzeba wlaczyc loading screen
         
+        
+        const userId = await AsyncStorage.getItem("userId");
+        const recommendation = await getRecommendation(userId);
+        const fetchedData: ProjectData[] = await fetchProjects();
+        console.log("Before sorting:",fetchedData.map((item) => item.id));
+
+        const sortedData = await Promise.all(
+        fetchedData.map(async (item) => {
+        // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        const index = await recommendation.indexOf(item.id);
+        return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+      })
+    );
+
+        sortedData.sort((a, b) => a.index - b.index);
+        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        console.log("After sorting:",finalSortedData.map((item) => item.id));
+        setData(finalSortedData);
+        //!!tu wylaczyc loading screen
+      }
+
+    }else if (direction=="left"){
+
     }
 
   };
@@ -747,7 +808,7 @@ function CardSwiper() {
         {data.slice().reverse().map((character, index) => (
           <TinderCard
             key={character.id}
-            onSwipe={(dir) => swiped(dir)}
+            onSwipe={(dir) => swiped(dir,character.id)}
             onCardLeftScreen={() => outOfFrame(character.name)}
             preventSwipe={['up', 'down']}
           >
@@ -769,7 +830,6 @@ function CardSwiper() {
           onPressCancel={onPressCancel}
         />
       )}
-   
     </View>
   );
 }

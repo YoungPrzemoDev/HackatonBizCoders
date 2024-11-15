@@ -18,3 +18,8 @@ export interface BasicUser {
   firstName: string;
   profilePicUrl: string;
 }
+
+export interface UserInteraction{
+  projectID: string;
+  userId:string;
+}

@@ -98,4 +98,14 @@ def findVectorById(id):
     output_fields=["vector"]  # Specify the fields you want to retrieve
     )
     vector_texts = [result['vector'] for result in results]
-    return vector_texts[0]
+    print("$$$$$$$",np.array((vector_texts[0])))
+    return np.array([vector_texts[0]])
+
+def updateUserVector(vector,userId):
+    print("wektor do update",vector)
+    collection=Collection("UserPreferences")
+    data=[
+        {"idUser": userId, "about":findAboutById(userId),"vector":vector[0]}
+    ]
+    collection.upsert(data)
+    print("Ustawionow nowy wektor dla uzytkownika ")

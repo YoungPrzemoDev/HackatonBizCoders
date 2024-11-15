@@ -1,3 +1,4 @@
+import { UserInteraction } from '@/app/interfaces/User';
 import axios from 'axios';
 const BASE_URL = 'http://172.25.161.17:5041';
 
@@ -28,5 +29,13 @@ const api = axios.create({
         const response=await axios.post(`${BASE_URL}/about/${userId}`)
     }catch (error){
       throw error;
+    }
+  };
+  export const sendInterraction = async (interaction:UserInteraction) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/userInteraction/`, interaction);
+      console.log("Response:", response.data);
+    } catch (error) {
+      console.error("Error sending interaction:", error);
     }
   };

@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 from milvus_model.dense import JinaEmbeddingFunction
 import pandas as pd
+import numpy as np
 import re
 load_dotenv()
 
@@ -145,6 +146,7 @@ def insertData(ids,texts,embeddings,userId):
 
 
 def returnIdForRecommendation(prompt,userId):
+    print("!!!!Wchodze do multisearxh")
     embedPrompt=prompt
     print(embedPrompt)
     search_param_1 = {
