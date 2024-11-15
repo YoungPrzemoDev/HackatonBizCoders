@@ -688,68 +688,9 @@ import { db } from "@/config/FirebaseConfig";
 import CustomAlert from './CustomAlert';  // Twój komponent modala
 import { fetchProjects,ProjectData } from "../services/FirebaseService";
 import {  Alert } from 'react-native';
-const styles = StyleSheet.create({
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#fff',
-  },
-  header: {
-    color: '#fff',
-    fontSize: 30,
-    marginBottom: 30,
-  },
-  cardContainer: {
-    width: '100%',
-    maxWidth: 260,
-    height: 350,
-  },
-  card: {
-    position: 'absolute',
-    backgroundColor: '#fff',
-    width: '100%',
-    maxWidth: 260,
-    height: 450,
-    shadowColor: '#4B0082',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    borderRadius: 20,
-    resizeMode: 'cover',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    borderRadius: 20,
-    justifyContent: 'flex-end', // To make the text appear at the bottom
-  },
-  cardTitle: {
-    position: 'relative',
-    bottom: 0,
-    margin: 10,
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  cardDescription: {
-    position: 'absolute',
-    bottom: 30,
-    margin: 10,
-    color: '#000',
-    fontSize: 12,
-  },
-  infoText: {
-    height: 28,
-    justifyContent: 'center',
-    display: 'flex',
-    zIndex: -100,
-  }
-})
-
-
+import CardStyles from '../constants/CardSwiperStyle'
+//style w pliku '../constants/CardSwiperStyle'
+//po przesunieciu w prawo CustomAlert
 function CardSwiper() {
   const [characters, setCharacters] = useState<any[]>([]);  // Tablica na projekty z bazy
   const [lastDirection, setLastDirection] = useState<string | null>(null);
@@ -798,8 +739,8 @@ function CardSwiper() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.cardContainer}>
+    <View style={CardStyles.container}>
+      <View style={CardStyles.cardContainer}>
         {data.slice().reverse().map((character, index) => (
           <TinderCard
             key={character.id}
@@ -807,10 +748,10 @@ function CardSwiper() {
             onCardLeftScreen={() => outOfFrame(character.name)}
             preventSwipe={['up', 'down']}
           >
-            <View style={[styles.card, { zIndex: characters.length - index }]}>
-              <ImageBackground style={styles.cardImage} source={{ uri: character.image }}>
-                <Text style={styles.cardTitle}>{character.name}</Text>
-                <Text style={styles.cardDescription}>{character.description}</Text>
+            <View style={[CardStyles.card, { zIndex: characters.length - index }]}>
+              <ImageBackground style={CardStyles.cardImage} source={{ uri: character.image }}>
+                <Text style={CardStyles.cardTitle}>{character.name}</Text>
+                <Text style={CardStyles.cardDescription}>{character.description}</Text>
               </ImageBackground>
             </View>
           </TinderCard>
