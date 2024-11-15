@@ -10,7 +10,7 @@ const technologies = [
     { id: '3', name: 'Node.js', icon: 'logo-nodejs' },
   ];
 
-export default function ScientsListItem({scient}) {
+  const ScientsListItem = ({scient}) => {
     const router=useRouter();
 
     const getScientistTechnologies = (scientist) => {
@@ -25,7 +25,7 @@ export default function ScientsListItem({scient}) {
       const handlePress = () => {
         const scientistTechnologies = getScientistTechnologies(scient);
         router.push({
-            pathname: 'scient-detail',
+            pathname: '/scient-detail',
             params: {
                 ...scient,
                 technologies: scientistTechnologies 
@@ -79,3 +79,5 @@ export default function ScientsListItem({scient}) {
     </TouchableOpacity>
   )
 }
+
+export default ScientsListItem;

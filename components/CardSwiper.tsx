@@ -1,4 +1,5 @@
 import { db } from "@/config/FirebaseConfig";
+import { Timestamp } from "firebase/firestore";
 import {
   collection,
   doc,
@@ -6,6 +7,7 @@ import {
   getDocs,
   updateDoc,
   arrayUnion,
+  addDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import React, { useState, useRef, useEffect } from "react";
@@ -44,6 +46,110 @@ export const joinGroup = async (projectId: string, userId: string) => {
   }
 };
 
+export const clickabilityGroup = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const addToGroup = projectData?.addToGroup || [];
+
+    const lastValue = addToGroup.length > 0 ? addToGroup[addToGroup.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      addToGroup: arrayUnion(newValue),
+      addToGroupTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+export const clickabilityViewership = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const viewership = projectData?.viewership || [];
+
+    const lastValue = viewership.length > 0 ? viewership[viewership.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      viewership: arrayUnion(newValue),
+      viewershipTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+export const clickabilityFavorities = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const addFav = projectData?.addFav || [];
+
+    const lastValue = addFav.length > 0 ? addFav[addFav.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      addFav: arrayUnion(newValue),
+      addFavTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+const handleJoinFavorites = async (cardId: string) => {
+  const currentUserId = await fetchCurrentUserId();
+
+  if (!currentUserId || !cardId) {
+    console.error("Missing user ID or card ID");
+    return;
+  }
+
+  const success2 = await clickabilityFavorities(cardId);
+  if (success2) {
+    console.log("Card successfully joined the group!");
+  } else {
+    console.error("Failed to join the Card");
+  }
+
+};
+
 const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
@@ -67,6 +173,13 @@ const handleJoinGroup = async (cardId: string) => {
   } else {
     console.error("Failed to join the group");
   }
+  const success2 = await clickabilityGroup(cardId);
+  if (success2) {
+    console.log("Card successfully joined the group!");
+  } else {
+    console.error("Failed to join the Card");
+  }
+
 };
 
 const getCardStyle = (cardIndex, animations) => {
@@ -130,45 +243,45 @@ const CardSwiper = () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         console.log(userId);
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
+        // const recommendation = await getRecommendation(userId);
+        // console.log(recommendation);
         console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
         //useState(data); // Set fetched data as visible cards
         //console.log(fetchedData)
         //sortowanie
-        console.log(
-          "Before sorting:",
-          fetchedData.map((item) => item.id)
-        );
+        // console.log(
+        //   "Before sorting:",
+        //   fetchedData.map((item) => item.id)
+        // );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
-        // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
 
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
-        console.log(
-          "After sorting:",
-          finalSortedData.map((item) => item.id)
-        );
+        // for (let index = 0; index < finalSortedData.length; index++) {
+        //   const element = finalSortedData[index];
+        //   console.log("ID:", element.id);
+        //   console.log("Tittle", element.name);
+        //   console.log("Key partners:", element.keyPartners);
+        //   console.log("------------------------------------------");
+        // }
+        // console.log(
+        //   "After sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );
 
         ////////
-        setData(finalSortedData);
-        setVisibleCards(finalSortedData);
+        setData(fetchedData);
+        setVisibleCards(fetchedData);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -250,9 +363,10 @@ const CardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex: number) => {
-    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
+  const handleCardSwipe = async (cardIndex: number) => {
     const cardId = visibleCards[cardIndex].id;
+    const success2 = await clickabilityViewership(cardId);
+    if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
@@ -503,6 +617,7 @@ const CardSwiper = () => {
                       onPress={() => {
                         console.log("Add to favorites");
                         console.log(currentCardID);
+                        handleJoinFavorites(currentCardID);
                         closeOverlay();
                       }}
                     >
@@ -543,7 +658,7 @@ function setVisibleCards(projectData: { id: string }[]) {
 const StyledText = styled.Text`
   color: red;
   text-align: center;
-  font-size: large;
+  font-size: 20;
   font-weight: bold;
   margin-top: 200px;
   margin-bottom: 60px;

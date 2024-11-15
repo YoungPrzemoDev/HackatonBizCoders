@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Colors } from './../../constants/Colors';
+import { Colors } from '../../constants/Colors';
 import { nodeModuleNameResolver } from 'typescript';
 //import "../../global.css"
 
@@ -24,7 +24,7 @@ const CircleIcon = ({ color, children }) => {
   );
 };
 
-export default function TabLayout() {
+const TabLayout = () => {
   return (
     <Tabs 
       screenOptions={{
@@ -88,3 +88,5 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+export default TabLayout;

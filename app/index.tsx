@@ -1,7 +1,7 @@
 import { Link, Redirect } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
-export default function Index() {
+const Index = () => {
   return (
     <View
       style={{
@@ -13,3 +13,4 @@ export default function Index() {
   );
 }
 
+export default Index;

@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import ScientInfo from '../../components/ScientInfo';
 
-export default function ScientDetail() {
+const ScientDetail = () => {
     const scient = useLocalSearchParams();
     const navigation = useNavigation();
     console.log(scient)
@@ -18,3 +18,4 @@ export default function ScientDetail() {
     </View>
   )
 }
+export default ScientDetail;

@@ -14,7 +14,7 @@ import { getFirestore } from "firebase/firestore";
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function RegisterSciencist() {
+export default function RegisterSciencist1() {
     const [form, setForm] = useState({
         email: '',
         login: '',
