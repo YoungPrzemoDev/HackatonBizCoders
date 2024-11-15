@@ -1,5 +1,5 @@
 import { db } from "@/config/FirebaseConfig";
-import { collection, getDocs,doc,updateDoc,arrayUnion } from "firebase/firestore";
+import { collection, getDocs,doc,updateDoc,arrayUnion ,getDoc } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface ProjectData {
@@ -52,5 +52,24 @@ export const addProjectUser = async (projectId: string, userId: string) => {
   } catch (error) {
     console.error("Error adding project to user:", error);
     return false;
+  }
+};
+export const fetchUserProjects = async (userId) => {
+  try {
+    // Odwołanie do dokumentu w kolekcji "users" z id "5"
+    const userDocRef = doc(db, "users", userId);
+    
+    // Pobranie dokumentu
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data(); // Uzyskanie danych dokumentu
+      console.log("Projects:", userData.projects); // Dostęp do pola "projects"
+      return userData.projects; // Zwraca tablicę "projects"
+    } else {
+      console.log("No such document!");
+    }
+  } catch (error) {
+    console.error("Error fetching projects:", error);
   }
 };

@@ -685,7 +685,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ImageBackground,StyleSheet } from 'react-native';
 import TinderCard from 'react-tinder-card';  // Upewnij się, że masz odpowiednią bibliotekę zainstalowaną
 import CustomAlert from './CustomAlert';  // Twój komponent modala
-import { fetchProjects,ProjectData } from "../services/FirebaseService";
+import { addProjectUser, fetchProjects,ProjectData,fetchUserProjects } from "../services/FirebaseService";
 import { getRecommendation, sendInterraction } from '@/services/RecommenadtionService';
 import CardStyles from '../constants/CardSwiperStyle'
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -699,6 +699,7 @@ function CardSwiper() {
   const [data, setData] = useState<ProjectData[]>([]);
   const [userID,setUserID] = useState<string>(null);
   const [loading, setLoading] = useState(false); // Flaga ładowania
+  const [resetKey, setResetKey] = useState(0);
   const INITIAL_CARD_COUNT = 4;
   let counter=0;
     //     // Fetch projects when the component mounts
@@ -742,7 +743,10 @@ function CardSwiper() {
   // Funkcja obsługująca przesunięcie karty
   const swiped = async (direction: string,projectID: string) => {
     setLastDirection(direction);
+    const userId = await AsyncStorage.getItem("userId");
     if(direction=="right"){
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID,userId)
       console.log("Teraz Otwarty projekt ",projectID);
       setModalVisible(true);
      
@@ -761,28 +765,41 @@ function CardSwiper() {
         //!!tutaj trzeba wlaczyc loading screen
         
         
-        const userId = await AsyncStorage.getItem("userId");
-        const recommendation = await getRecommendation(userId);
-        const fetchedData: ProjectData[] = await fetchProjects();
-        console.log("Before sorting:",fetchedData.map((item) => item.id));
+        
+        const recommendation1 = await getRecommendation(userId);
+        const fetchedData1: ProjectData[] = await fetchProjects();
+        console.log("Before sorting:",fetchedData1.map((item) => item.id));
 
-        const sortedData = await Promise.all(
-        fetchedData.map(async (item) => {
+        const sortedData1 = await Promise.all(
+        fetchedData1.map(async (item) => {
         // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-        const index = await recommendation.indexOf(item.id);
+        const index = await recommendation1.indexOf(item.id);
         return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
       })
     );
 
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
-        console.log("After sorting:",finalSortedData.map((item) => item.id));
-        setData(finalSortedData);
+        sortedData1.sort((a, b) => a.index - b.index);
+        const finalSortedData1 = sortedData1.map(({ index, ...item }) => item);
+        console.log("After sorting:",finalSortedData1.map((item) => item.id));
+        
+        console.log(finalSortedData1)
+        setData([]);
+        //pobranie tablicy wyswietlonych projektow oraz wyswietlenie tych innych 
+        const array = await fetchUserProjects(userID)
+        console.log("array ::::",array)
+        const filteredData = finalSortedData1.filter(
+          (project) => !array.includes(project.id)
+        );
+        setData((prevData) => [...prevData, ...filteredData]);
+        setResetKey((prevKey) => prevKey + 1);
+        counter=0;
         //!!tu wylaczyc loading screen
       }
 
     }else if (direction=="left"){
-
+      counter++;
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID,userId)
     }
 
   };
@@ -804,7 +821,7 @@ function CardSwiper() {
 
   return (
     <View style={CardStyles.container}>
-      <View style={CardStyles.cardContainer}>
+      <View key={resetKey} style={CardStyles.cardContainer}>
         {data.slice().reverse().map((character, index) => (
           <TinderCard
             key={character.id}
