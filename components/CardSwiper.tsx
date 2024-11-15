@@ -720,8 +720,9 @@ function CardSwiper() {
     setLastDirection(direction);
     if(direction=="right"){
       setModalVisible(true);
+    }else if (direction=="left"){
+        
     }
-    
 
   };
 
