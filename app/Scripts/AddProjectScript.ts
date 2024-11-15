@@ -70,4 +70,4 @@ async function addProjectsToFirestore() {
   }
 }
 
-addProjectsToFirestore();
+//addProjectsToFirestore();
