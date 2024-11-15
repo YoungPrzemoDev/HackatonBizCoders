@@ -12,6 +12,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "newArchEnabled": false,
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-redux"
+        ]
+      }
+    },
     "ios": {
       "supportsTablet": true
     },

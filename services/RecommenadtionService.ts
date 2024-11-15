@@ -21,3 +21,12 @@ const api = axios.create({
       throw error;
     }
   };
+
+  export const sendUser = async(userId)=>{
+    try{
+        console.log("wyslanie user id do backendu",userId);
+        const response=await axios.post(`${BASE_URL}/about/${userId}`)
+    }catch (error){
+      throw error;
+    }
+  };

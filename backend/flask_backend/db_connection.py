@@ -63,8 +63,7 @@ def getScientistInfo(user):
     return info
 
 def getAllBusinessModels():
-    fields=["keyPartners","keyActivities","keyResources","valuePropositions",
-            "channels", "customerRelationships", "customerSegments","costStructure","revenueStreams"]
+    fields=["description","longDescription","name","tags"]
     projectCollection=context.collection("projects")
     projects=projectCollection.get()
     ids=[]
@@ -72,28 +71,17 @@ def getAllBusinessModels():
     modelInfo=[]
     connectedString=""
     for p in projects:
-        for i  in range(3):
-            value = p.to_dict().get(fields[i]) 
-            connectedString+=str(value)+" " 
-        modelInfo.append(connectedString)        
-        connectedString=""        
-
-        for i in range(3,5):
-            value = p.to_dict().get(fields[i]) 
-            connectedString+=str(value)+" " 
-        modelInfo.append(connectedString)        
-        connectedString=""
-
-        for i in range(5,7):
-            value = p.to_dict().get(fields[i]) 
-            connectedString+=str(value)+" " 
-        modelInfo.append(connectedString)        
-        connectedString=""
-    
-        for i in range(7,9):
-            value = p.to_dict().get(fields[i]) 
-            connectedString+=str(value)+" " 
-        modelInfo.append(connectedString)        
+        for i in fields:
+            if i == "tags":
+                value = p.to_dict().get(i)
+                for j in value:
+                    connectedString+=j+","
+                modelInfo.append(connectedString)
+            else:
+                value = p.to_dict().get(i) 
+                if value:  
+                    modelInfo.append(value)
+        #modelInfo.append(connectedString)        
         connectedString=""
         #print(modelInfo)
         value = p.id
@@ -119,7 +107,12 @@ def createEmbedding(texts):
     #     print("#########################################")
     print(embeddings)
     return embeddings  #it returns [model1[0.....8],model2[0....8],...,modeln[0.....8]] macierz n wierszy na 9 kolumn 
-
+def createSingleEmbedd(text):
+    print("########single embede")
+    embeddings=[]
+    embeddings.append(ef(text))
+    print(embeddings[0])
+    return embeddings
 
 def newCollection(inserted_rows,userId):
     dbSchema.createIndex(inserted_rows,userId)
@@ -152,7 +145,7 @@ def insertData(ids,texts,embeddings,userId):
 
 
 def returnIdForRecommendation(prompt,userId):
-    embedPrompt=ef(prompt)
+    embedPrompt=prompt
     print(embedPrompt)
     search_param_1 = {
     "data": embedPrompt, # Query vector
