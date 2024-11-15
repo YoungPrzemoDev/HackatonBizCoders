@@ -695,7 +695,6 @@ function CardSwiper() {
   const [characters, setCharacters] = useState<any[]>([]);  // Tablica na projekty z bazy
   const [lastDirection, setLastDirection] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
-  const [projectData, setProjectData] = useState<any | null>(null); // Zmienna na szczegóły projektu
   const [data, setData] = useState<ProjectData[]>([]);
     //     // Fetch projects when the component mounts
     useEffect(() => {
@@ -719,7 +718,10 @@ function CardSwiper() {
   // Funkcja obsługująca przesunięcie karty
   const swiped = (direction: string) => {
     setLastDirection(direction);
-    setModalVisible(true);
+    if(direction=="right"){
+      setModalVisible(true);
+    }
+    
 
   };
 
@@ -748,7 +750,7 @@ function CardSwiper() {
             onCardLeftScreen={() => outOfFrame(character.name)}
             preventSwipe={['up', 'down']}
           >
-            <View style={[CardStyles.card, { zIndex: characters.length - index }]}>
+            <View style={[CardStyles.card, { zIndex: data.length - index }]}>
               <ImageBackground style={CardStyles.cardImage} source={{ uri: character.image }}>
                 <Text style={CardStyles.cardTitle}>{character.name}</Text>
                 <Text style={CardStyles.cardDescription}>{character.description}</Text>
@@ -766,13 +768,7 @@ function CardSwiper() {
           onPressCancel={onPressCancel}
         />
       )}
-      {lastDirection  
-      // (
-      //   // <Text style={{ fontSize: 18, textAlign: 'center' }}>
-      //   //   You swiped {lastDirection}
-      //   // </Text>
-      // )
-      }
+   
     </View>
   );
 }
