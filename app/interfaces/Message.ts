@@ -5,4 +5,5 @@ export interface Message {
     sentAt: Timestamp;
     sentBy: string;
     type: "text" | "image" | "video" | "file";
+    system: boolean;
   }

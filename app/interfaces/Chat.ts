@@ -7,6 +7,7 @@ export interface Chat {
     createdBy: string; // User ID of the creator
     participants: string[]; // Array of user IDs
     active: number;
+    projectId: string;
   }
 
 export interface ChatWithId extends Chat {

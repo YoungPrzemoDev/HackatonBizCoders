@@ -15,7 +15,8 @@ export const fetchNotificationProjectById = async (projectId: string): Promise<P
                 id: projectData.id,
                 imageUrl: projectData.image,
                 ownerId: projectData.userId,
-                name: projectData.name
+                name: projectData.name,
+                members: projectData.members
             }
 
             return project;

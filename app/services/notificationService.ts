@@ -7,6 +7,7 @@ import { Notification } from "../interfaces/Notification";
 import { addDoc, collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import Toast from "react-native-toast-message";
+import { router } from "expo-router";
 
 export const addNotification = async (userId: string, projectId: string): Promise<void> => {
     try {
@@ -33,6 +34,13 @@ export const addNotification = async (userId: string, projectId: string): Promis
     }
 }
 
+const navigateToNotification = (projectId: string, userId: string) => {
+    router.push({
+        pathname: '../Notification',
+        params: { projectId, userId },
+    })
+}
+
 export const listenToNotification = (
     currentUserId: string,
 ) => {
@@ -48,6 +56,7 @@ export const listenToNotification = (
                         type: "info",
                         text1: "New Request!",
                         text2: `You have new request to join the Project ${notification.project.name}`,
+                        onPress: () => navigateToNotification(notification.project.id, notification.sender.id)
                     });
 
                 }
@@ -57,4 +66,3 @@ export const listenToNotification = (
 
     return unsubscribe;
 }
-

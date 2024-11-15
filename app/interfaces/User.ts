@@ -24,5 +24,10 @@ export interface UserToNotification {
   id: string,
   firstName: string,
   lastName: string,
-  profilePicUrl: string
+  profilePicUrl: string,
+  email: string,
+  // lastSeen: number,
+  userType?: "Businessman" | "Scientist",
+  about: string,
+  tags: string[];
 }

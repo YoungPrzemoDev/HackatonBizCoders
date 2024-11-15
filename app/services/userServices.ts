@@ -77,7 +77,12 @@ export const fetchNotificationUserById = async (userId: string): Promise<UserToN
                 id: userDoc.id,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                profilePicUrl: data.profilePicUrl
+                profilePicUrl: data.profilePicUrl,
+                email: data.email,
+                // lastSeen: data.lastSeen,
+                userType: data.userType,
+                about: data.about,
+                tags: data.tags || []
             };
 
             return user;

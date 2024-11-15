@@ -1,19 +1,22 @@
 import { db } from '../../config/FirebaseConfig'
-import { collection, doc, addDoc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, updateDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { Chat } from '../interfaces/Chat'
 import { addMessageToChat } from './messageService';
 
-export async function createChat(chatData: Omit<Chat, 'active' | 'createdAt'>): Promise<void> {
+export async function createChat(chatData: Omit<Chat, 'active' | 'createdAt'>): Promise<string | null> {
     try {
         const chatRef = collection(db, 'chats');
         const chatWithDefaults = {
             ...chatData,
             createdAt: Timestamp.now(),
-            active: 0,
+            active: 1,
         };
-        await addDoc(chatRef, chatWithDefaults);
+        const docRef = await addDoc(chatRef, chatWithDefaults);
+        return docRef.id;
+
     } catch (error) {
         console.error("Error creating chat: ", error);
+        return null;
     }
 }
 
@@ -38,3 +41,25 @@ export async function activateChat(chatId: string): Promise<void> {
         console.error("Error activating chat:", error);
     }
 }
+
+export async function findChatByProjectId(projectId: string): Promise<string | null> {
+    try {
+        const chatsRef = collection(db, "chats");
+        const q = query(chatsRef, where('projectId', '==', projectId));
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const chatDoc = querySnapshot.docs[0];
+            console.log(`Chat found: ${chatDoc.id}`);
+            return chatDoc.id;
+        } else {
+            console.log(`No chat found for projectId: ${projectId}`);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error finding chat by projectId: ", error);
+        return null;
+    }
+}
+

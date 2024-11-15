@@ -67,7 +67,8 @@ const ChatDetails: React.FC = () => {
           : new Date(giftedMessage.createdAt)
       ),
       sentBy: giftedMessage.user._id as string,
-      type: "text"
+      type: "text",
+      system: false
     };
 
     await addMessageToChat(chatId as string, message);
