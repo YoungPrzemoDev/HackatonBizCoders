@@ -690,6 +690,7 @@ import { getRecommendation, sendInterraction } from '@/services/RecommenadtionSe
 import CardStyles from '../constants/CardSwiperStyle'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserInteraction } from '@/app/interfaces/User';
+import LoadingSpinner from './LoadingSpinner';
 //style w pliku '../constants/CardSwiperStyle'
 //po przesunieciu w prawo CustomAlert
 function CardSwiper() {
@@ -698,12 +699,13 @@ function CardSwiper() {
   const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
   const [data, setData] = useState<ProjectData[]>([]);
   const [userID,setUserID] = useState<string>(null);
-  const [loading, setLoading] = useState(false); // Flaga ładowania
-  const [resetKey, setResetKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+    const [resetKey, setResetKey] = useState(0);
   const INITIAL_CARD_COUNT = 4;
   let counter=0;
     //     // Fetch projects when the component mounts
     useEffect(() => {
+      
         const fetchData = async () => {
           try {
            const userId = await AsyncStorage.getItem("userId");
@@ -732,6 +734,7 @@ function CardSwiper() {
 
 
             setData(finalSortedData);
+            setIsLoading(false);
             console.log(fetchedData[0].id)
             //console.log(sortedData);
           } catch (error) {
@@ -739,6 +742,9 @@ function CardSwiper() {
           }
         };
         fetchData();
+        
+        
+      
       }, []);
   // Funkcja obsługująca przesunięcie karty
   const swiped = async (direction: string,projectID: string) => {
@@ -765,7 +771,7 @@ function CardSwiper() {
         //!!tutaj trzeba wlaczyc loading screen
         
         
-        
+        setIsLoading(true);
         const recommendation1 = await getRecommendation(userId);
         const fetchedData1: ProjectData[] = await fetchProjects();
         console.log("Before sorting:",fetchedData1.map((item) => item.id));
@@ -792,6 +798,7 @@ function CardSwiper() {
         );
         setData((prevData) => [...prevData, ...filteredData]);
         setResetKey((prevKey) => prevKey + 1);
+        setIsLoading(false);
         counter=0;
         //!!tu wylaczyc loading screen
       }
@@ -819,13 +826,16 @@ function CardSwiper() {
     setModalVisible(false); // Zamknięcie modala po naciśnięciu Cancel
   };
 
-  return (
+  return ( 
     <View style={CardStyles.container}>
+    {isLoading ? (
+      <LoadingSpinner size={36} color="#0000ff" /> // Twój spinner podczas ładowania
+    ) : (
       <View key={resetKey} style={CardStyles.cardContainer}>
         {data.slice().reverse().map((character, index) => (
           <TinderCard
             key={character.id}
-            onSwipe={(dir) => swiped(dir,character.id)}
+            onSwipe={(dir) => swiped(dir, character.id)}
             onCardLeftScreen={() => outOfFrame(character.name)}
             preventSwipe={['up', 'down']}
           >
@@ -837,17 +847,19 @@ function CardSwiper() {
             </View>
           </TinderCard>
         ))}
-       </View>
-      {modalVisible && (
-        <CustomAlert
-          visible={modalVisible}
-          title="✅"
-          message="Choose your action"
-          onPressOK={onPressOK}
-          onPressCancel={onPressCancel}
-        />
-      )}
-    </View>
+      </View>
+    )}
+  
+    {modalVisible && (
+      <CustomAlert
+        visible={modalVisible}
+        title="✅"
+        message="Choose your action"
+        onPressOK={onPressOK}
+        onPressCancel={onPressCancel}
+      />
+    )}
+  </View>
   );
 }
 
