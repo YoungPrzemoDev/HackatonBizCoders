@@ -6,6 +6,7 @@ import { Link } from 'expo-router';
 import { MultiSelect } from 'react-native-element-dropdown';
 import { db } from '../config/FirebaseConfig';
 import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, getDocs, limit, orderBy } from "firebase/firestore";
+import { fetchGPTResponse, fetchTagsResponse3, fetchTagsResponse4, fetchTagsResponse5 } from './services/gptPromt';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -20,8 +21,9 @@ export default function RegisterSciencist() {
     about: '',
   });
 
-  const [selected, setSelected] = useState<string[]>([]);
-
+  const [description, setDescription] = useState<string[]>([]);
+  const [tags, setTags] = useState([]);
+  const [problems, setProblems] = useState([]);
   const data = [
     { label: 'Biotechnology', value: 'biotech' },
     { label: 'Artificial Intelligence', value: 'ai' },
@@ -30,11 +32,74 @@ export default function RegisterSciencist() {
     { label: 'Quantum Computing', value: 'quantum' },
   ];
 
+  const [loading, setLoading] = useState(false);
 
-
-
+  async function handleGenerateLongDescription() {
+    if (form.about) {
+      setLoading(true);
+      try {
+        // Czekaj na wszystkie odpowiedzi równocześnie
+        const DescriptionGenerated = await Promise.all([
+          fetchTagsResponse4(form.about)
+        ]);
+        return DescriptionGenerated;
+      } catch (error) {
+        console.error("Error generating long description:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert("Warning", "Please provide a description first.");
+    }
+  }
+  
+  async function handleGenerateLongDescription1() {
+    if (form.about) {
+      setLoading(true);
+      try {
+        // Czekaj na wszystkie odpowiedzi równocześnie
+        const  Problems = await Promise.all([
+          fetchTagsResponse5(form.about)
+        ]);
+        return Problems;
+      } catch (error) {
+        console.error("Error generating long description:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert("Warning", "Please provide a description first.");
+    }
+  }
+  async function handleGenerateLongDescription2() {
+    if (form.about) {
+      setLoading(true);
+      try {
+        // Czekaj na wszystkie odpowiedzi równocześnie
+        const Tags = await Promise.all([
+          fetchTagsResponse3(form.about)
+        ]);
+  
+        return Tags;
+      } catch (error) {
+        console.error("Error generating long description:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert("Warning", "Please provide a description first.");
+    }
+  }
   async function addUserWithIncrement() {
     try {
+      // Generate description
+      const w1 = await handleGenerateLongDescription();
+      const w2 = await handleGenerateLongDescription1();
+      const w3 = await handleGenerateLongDescription2(); 
+      console.log(w1);
+      
+      console.log(w3);
+  
       // Reference to the "scientist" collection
       const scientistRef = collection(db, "users");
   
@@ -48,16 +113,18 @@ export default function RegisterSciencist() {
         newId = highestDoc.data().id + 1; // Increment the highest 'id'
       }
   
+      // Save to Firestore
       await setDoc(doc(scientistRef, newId.toString()), {
         id: newId,
+        tags: w3[0],
+        description: w2[0],
         email: form.email,
         login: form.login,
         password: form.password,
         firstName: form.firstName,
         lastName: form.lastName,
-        about: form.about,
-        userType: 'Scientist',
-        tags: selected,
+        about: w1[0][0],
+        userType: "Scientist",
         joinDate: serverTimestamp(), // Add timestamp for join date
       });
   
@@ -159,25 +226,13 @@ export default function RegisterSciencist() {
               </InputGroupHalf>
             </InputRow>
 
-            <InputGroup>
-              <InputLabel>Areas of Interest</InputLabel>
-              <MultiSelect
-                style={styles.dropdown}
-                data={data}
-                labelField="label"
-                valueField="value"
-                placeholder="Select interests"
-                value={selected}
-                onChange={data => setSelected(data)}
-                selectedStyle={styles.selectedStyle}
-              />
-            </InputGroup>
+            
 
             <InputGroup>
-              <InputLabel>About You</InputLabel>
+              <InputLabel>Gives as links to your scient work</InputLabel>
               <TextArea
                 multiline
-                placeholder="Tell us a bit about yourself..."
+                placeholder="Links..."
                 onChangeText={about => setForm({ ...form, about })}
                 value={form.about}
               />

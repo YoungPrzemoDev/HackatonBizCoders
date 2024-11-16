@@ -171,16 +171,15 @@ export default function RegisterSciencist() {
                         </InputRow>
 
                         <InputGroup>
-                            <InputLabel>About You</InputLabel>
-                            <TextArea
-                                multiline
-                                numberOfLines={4}
-                                placeholder="Tell us a bit about yourself..."
-                                placeholderTextColor="#6b7280"
-                                onChangeText={about => setForm({ ...form, about })}
-                                value={form.about}
-                            />
-                        </InputGroup>
+              <InputLabel>Gives as links to your scient work</InputLabel>
+                <TextArea
+                  multiline
+                  placeholder="Links..."
+                  onChangeText={about => setForm({ ...form, about })}
+                  value={form.about}
+                  
+                />
+            </InputGroup>
 
                         <FormAction>
                             <Button onPress={addUserWithIncrement}>

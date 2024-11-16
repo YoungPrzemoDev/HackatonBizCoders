@@ -220,9 +220,9 @@ const Dashbords = () => {
         height={220}
         yAxisLabel=""
         chartConfig={{
-          backgroundColor: Colors.SECOND,
-          backgroundGradientFrom: Colors.SECOND,
-          backgroundGradientTo: Colors.SECOND,
+          backgroundColor: '#3f3f46',
+          backgroundGradientFrom: '#3f3f46',
+          backgroundGradientTo: '#3f3f46',
           color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
         }}
@@ -243,9 +243,9 @@ const Dashbords = () => {
         height={220}
         yAxisLabel=""
         chartConfig={{
-          backgroundColor: '#2e2e2e',
-          backgroundGradientFrom: '#3a3a3a',
-          backgroundGradientTo: '#4a4a4a',
+          backgroundColor: '#3f3f46',
+          backgroundGradientFrom: '#3f3f46',
+          backgroundGradientTo: '#3f3f46',
           color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
         }}
@@ -265,22 +265,23 @@ const Dashbords = () => {
         height={220}
         yAxisLabel=""
         chartConfig={{
-          backgroundColor: '#2e2e2e',
-          backgroundGradientFrom: '#3a3a3a',
-          backgroundGradientTo: '#4a4a4a',
+          backgroundColor: '#3f3f46',
+          backgroundGradientFrom: '#3f3f46',
+          backgroundGradientTo: '#3f3f46',
           color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
         }}
         fromZero={true}
         style={styles.chart}
       />
+      </View>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => setExpandedCardId(null)}
       >
         <Text style={styles.buttonText}>Back to Dashboard</Text>
       </TouchableOpacity>
-    </View>
+    
     </ScrollView>
   );
 
@@ -330,21 +331,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
-    marginTop: 40
+    backgroundColor: '#27272a'
     },
   dashboardTitle: {
+    color: '#ffffff',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    marginTop: 20,
   },
   tileContainer: {
+    alignItems: 'center',
+    width: screenWidth,
     flexDirection: 'column',
     paddingBottom: 20,
   },
   tile: {
-    width: screenWidth*0.8,
     marginBottom: 20,
     borderWidth: 1,
+    backgroundColor: '#3d3d3d',
+    width: screenWidth * 0.8,
     borderColor: '#ddd',
     borderRadius: 10,
     padding: 10,
@@ -355,6 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tileText: {
+    color: '#ffffff',
     marginTop: 10,
     fontSize: 16,
     fontWeight: '600',
@@ -363,18 +370,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#27272a',
+
   },
   chartTitle: {
+    marginTop: 20,
+    color: '#ffffff',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
   },
   chart: {
+    borderWidth: 0.8
+    ,
+    borderColor: '#ffffff',
     marginVertical: 8,
     borderRadius: 16,
   },
   backButton: {
-    backgroundColor: Colors.MAIN,
+    alignItems: 'center',
+    backgroundColor: '#52525b',
     padding: 10,
     borderRadius: 5,
     marginVertical: 20,
