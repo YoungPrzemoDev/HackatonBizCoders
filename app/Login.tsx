@@ -1,25 +1,22 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions, Alert } from 'react-native';
-import { Link, router } from 'expo-router';
+import React, { useState } from "react";
+import styled from "styled-components/native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { Dimensions, Alert } from "react-native";
+import { Link, router } from "expo-router";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import {
-  SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
+import { SafeAreaView, TextInput, TouchableOpacity } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { db } from '@/config/FirebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendUser } from "@/services/RecommenadtionService";
 import messaging from '@react-native-firebase/messaging';
 
-const screenWidth = Dimensions.get('window').width;
+const screenWidth = Dimensions.get("window").width;
 
 export default function Login() {
   const [form, setForm] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   async function handleLogin() {
@@ -44,10 +41,10 @@ export default function Login() {
             userFound = true;
             await AsyncStorage.setItem('userId', doc.id); // Save userId to AsyncStorage
             await AsyncStorage.setItem('userFirstName', userData.firstName);
-            // await AsyncStorage.setItem('userProfileUrl', userData.profilePicUrl);
-            // await requestAndSaveToken(doc.id);
             Alert.alert("Login Successful", "Welcome back!");
-            router.push('/(tabs)/home');
+            const sendRequest = sendUser(doc.id);
+
+            router.push("/(tabs)/home");
           }
         });
 
@@ -68,23 +65,23 @@ export default function Login() {
             <HeaderImg
               alt="Logo"
               resizeMode="contain"
-              source={require('../assets/images/letter-b.gif')}
+              source={require("../assets/images/letter-b.gif")}
             />
             <Title>
-              Sign in to <Title style={{ color: '#4acacd' }}>Binder</Title>
+              Sign in to <Title style={{ color: "#4acacd" }}>Binder</Title>
             </Title>
             <Subtitle>The place where Innovation meets Investment</Subtitle>
           </Header>
 
           <Form>
-          <InputGroup>
+            <InputGroup>
               <InputLabel>Email address</InputLabel>
               <InputControl
                 autoCapitalize="none"
                 autoCorrect={false}
                 clearButtonMode="while-editing"
                 keyboardType="email-address"
-                onChangeText={email => setForm({ ...form, email })}
+                onChangeText={(email) => setForm({ ...form, email })}
                 placeholder="john@example.com"
                 placeholderTextColor="#6b7280"
                 value={form.email}
@@ -96,7 +93,7 @@ export default function Login() {
               <InputControl
                 autoCorrect={false}
                 clearButtonMode="while-editing"
-                onChangeText={password => setForm({ ...form, password })}
+                onChangeText={(password) => setForm({ ...form, password })}
                 placeholder="************"
                 placeholderTextColor="#6b7280"
                 secureTextEntry
@@ -110,20 +107,16 @@ export default function Login() {
               </Button>
             </FormAction>
             <FormLink>
-              <Link href="/Home">
-                Forgot password?
-              </Link>
+              <Link href="/Home">Forgot password?</Link>
             </FormLink>
           </Form>
         </KeyboardAwareScrollView>
 
-        <TouchableOpacity onPress={() => { }}>
+        <TouchableOpacity onPress={() => {}}>
           <FormFooter>
             Don't have an account?
             <SignUpLink>
-              <Link href="/Model">
-                Sign up
-              </Link>
+              <Link href="/Model">Sign up</Link>
             </SignUpLink>
           </FormFooter>
         </TouchableOpacity>
@@ -135,14 +128,18 @@ export default function Login() {
 // Styled Components
 const Container = styled(SafeAreaView)`
   flex: 1;
-  background-color:F0F0F0;
+  background-color: F0F0F0;
 `;
 
 const InnerContainer = styled.View`
   flex: 1;
   padding: 20px;
-  width: ${screenWidth > 768 ? '600px' : '100%'};
-  margin-top: ${screenWidth > 1024 ? '100px' : screenWidth > 768 ? '10px' : '30px'};
+  width: ${screenWidth > 768 ? "600px" : "100%"};
+  margin-top: ${screenWidth > 1024
+    ? "100px"
+    : screenWidth > 768
+    ? "10px"
+    : "30px"};
   align-self: center;
 `;
 
@@ -155,7 +152,7 @@ const HeaderImg = styled.Image`
   width: 100px;
   height: 100px;
   margin-bottom: 10px;
-  border-radius:10px;
+  border-radius: 10px;
 `;
 
 const Title = styled.Text`

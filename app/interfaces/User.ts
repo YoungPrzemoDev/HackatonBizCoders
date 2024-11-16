@@ -31,3 +31,8 @@ export interface UserToNotification {
   about: string,
   tags: string[];
 }
+
+export interface UserInteraction{
+  projectID: string;
+  userId:string;
+}
