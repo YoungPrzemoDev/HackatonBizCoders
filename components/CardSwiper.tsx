@@ -139,13 +139,13 @@ const CardSwiper = () => {
           fetchedData.map((item) => item.id)
         );
 
-        // const sortedData = await Promise.all(
-        //   fetchedData.map(async (item) => {
-        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-        //     const index = await recommendation.indexOf(item.id);
-        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-        //   })
-        // );
+        const sortedData = await Promise.all(
+          fetchedData.map(async (item) => {
+            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+            const index = await recommendation.indexOf(item.id);
+            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+          })
+        );
 
         sortedData.sort((a, b) => a.index - b.index);
         const finalSortedData = sortedData.map(({ index, ...item }) => item);
