@@ -21,7 +21,7 @@ def initialize_firebase():
 
 #laczenie z baza 
 def connect():
-    connections.connect(host="172.25.162.247", port="19530")
+    connections.connect(host="172.30.0.1", port="19530")
     try:
         print("Connecting to Vector database ..........")
         # List all collections

@@ -78,29 +78,29 @@ const handleJoinGroup = async (cardId: string) => {
   }
 };
 
-const getCardStyle = (cardIndex, animations) => {
-  const animatedScale = animations[cardIndex].scale;
+// const getCardStyle = (cardIndex, animations) => {
+//   const animatedScale = animations[cardIndex].scale;
 
-  const animatedHeight = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [height * 0.9, height],
-  });
-  const animatedWidth = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [width * 1.1, width],
-  });
-  const animatedRadius = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [30, 1],
-  });
+//   const animatedHeight = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [height * 0.9, height],
+//   });
+//   const animatedWidth = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [width * 1.1, width],
+//   });
+//   const animatedRadius = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [30, 1],
+//   });
 
-  return {
-    width: animatedWidth,
-    height: animatedHeight,
-    transform: [{ scale: animatedScale }],
-    borderRadius: animatedRadius,
-  };
-};
+//   return {
+//     width: animatedWidth,
+//     height: animatedHeight,
+//     transform: [{ scale: animatedScale }],
+//     borderRadius: animatedRadius,
+//   };
+// };
 
 const Card = ({ card, cardIndex, onPress, animations }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
@@ -108,7 +108,7 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <CardContainer style={getCardStyle(cardIndex, animations)}>
+      <CardContainer>
         <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
@@ -118,6 +118,7 @@ const Card = ({ card, cardIndex, onPress, animations }) => {
     </TouchableWithoutFeedback>
   );
 };
+let counter = 0;
 let callCount = 0;
 const CardSwiper = () => {
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
@@ -134,7 +135,7 @@ const CardSwiper = () => {
   const [lastDirection, setLastDirection] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
   const INITIAL_CARD_COUNT = 4;
-  let counter = 0;
+
   const [animations, setAnimations] = useState([]);
 
   console.log("Jestem w swiper");
@@ -168,7 +169,7 @@ const CardSwiper = () => {
           "After sorting:",
           finalSortedData.map((item) => item.id)
         );
-
+        setVisibleCards(finalSortedData);
         setData(finalSortedData);
         setIsLoading(false);
         console.log(fetchedData[0].id);
@@ -201,8 +202,9 @@ const CardSwiper = () => {
       console.log("wyszukany projekt", project.name);
       //usuwam projekt wyslany
       counter++;
-      console.log(counter);
-      if (counter == INITIAL_CARD_COUNT) {
+
+      console.log("counter", counter);
+      if (counter === INITIAL_CARD_COUNT) {
         //!!tutaj trzeba wlaczyc loading screen
 
         setIsLoading(true);
@@ -260,22 +262,22 @@ const CardSwiper = () => {
     }
   }, [data]);
 
-  const resetAllAnimations = () => {
-    animations.forEach((anim) => {
-      Animated.parallel([
-        Animated.timing(anim.scale, {
-          toValue: 0.75,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(anim.borderRadius, {
-          toValue: 30,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    });
-  };
+  // const resetAllAnimations = () => {
+  //   animations.forEach((anim) => {
+  //     Animated.parallel([
+  //       Animated.timing(anim.scale, {
+  //         toValue: 0.75,
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //       Animated.timing(anim.borderRadius, {
+  //         toValue: 30,
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //     ]).start();
+  //   });
+  // };
 
   const expandImage = (imageUri) => {
     setExpandedImage(imageUri);
@@ -286,15 +288,15 @@ const CardSwiper = () => {
     }).start();
   };
 
-  const resetImage = () => {
-    Animated.timing(imageScale, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      setExpandedImage(null);
-    });
-  };
+  // const resetImage = () => {
+  //   Animated.timing(imageScale, {
+  //     toValue: 1,
+  //     duration: 300,
+  //     useNativeDriver: false,
+  //   }).start(() => {
+  //     setExpandedImage(null);
+  //   });
+  // };
 
   const toggleExpandCard = (cardIndex: number) => {
     console.log("INdex przekazywany z karty!!!", cardIndex);
@@ -325,7 +327,7 @@ const CardSwiper = () => {
   const handleCardSwipe = async (direction: string, cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
-    await swiped(direction, cardId.toString());
+    await swiped(direction, cardId);
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
@@ -341,18 +343,11 @@ const CardSwiper = () => {
   }) => {
     console.log("INdexxxxxxxx w imagelist:", cardIndex);
     const selectedCard = data[cardIndex];
-    // console.log("ID:",selectedCard.id);
-    // console.log("Tittle",selectedCard.name);
-    // console.log("Key partners:",selectedCard.keyPartners);
-    // console.log("------------------------------------------")
-
-    // console.log("ImageList",cardIndex);
-    // console.log("IDX",selectedCard.id);
 
     return (
       <>
         {expandedImage ? (
-          <TouchableWithoutFeedback onPress={resetImage}>
+          <TouchableWithoutFeedback>
             <Animated.View
               style={{
                 position: "absolute",
@@ -464,13 +459,13 @@ const CardSwiper = () => {
   };
 
   return (
-    <MainContainer>
+    <MainContainer key={resetKey}>
       {visibleCards.length > 0 ? (
         expandedCardId !== null ? (
           <ImageList
             cardIndex={expandedCardId} //tu sie podaje numer projektu id a nie index i zmienia sie indeks
             onBackPress={() => {
-              resetAllAnimations();
+              //resetAllAnimations();
               setExpandedCardId(null);
             }}
           />
@@ -520,20 +515,6 @@ const CardSwiper = () => {
                     >
                       <Icon name="people-outline" size={30} color="#fff" />
                     </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[0].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0],
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Join the group
-                    </AnimatedText>
                   </Animated.View>
 
                   <Animated.View
@@ -553,20 +534,6 @@ const CardSwiper = () => {
                     >
                       <Icon name="heart-outline" size={30} color="#fff" />
                     </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[1].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0],
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Add to favorites
-                    </AnimatedText>
                   </Animated.View>
                 </ButtonContainer>
               </OverlayContainer>

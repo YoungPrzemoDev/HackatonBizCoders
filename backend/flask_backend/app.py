@@ -4,10 +4,21 @@ from fastapi import FastAPI
 from typing import List
 from models import Interraction
 import dbSchemaUser,dbSchema
+from fastapi.middleware.cors import CORSMiddleware
+
 #TESTID="5"
 
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # List of allowed origins
+    allow_credentials=True,  # Allow cookies and credentials if needed
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 async def initialize_db():
     db_connection.initialize_firebase()
