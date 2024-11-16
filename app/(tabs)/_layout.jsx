@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors } from './../../constants/Colors';
 import { nodeModuleNameResolver } from 'typescript';
-//import "../../global.css"
 
 const CircleIcon = ({ color, children }) => {
   return (
@@ -83,6 +82,24 @@ export default function TabLayout() {
             </CircleIcon>
           ),
         }} 
+      
+        
+      />
+
+<Tabs.Screen 
+        name='ChatDetails'
+        options={{
+          headerShown: false,
+          title: 'PROFILE',
+          headerShown: false,
+          tabBarButton: () => null,
+          tabBarIcon: ({ focused  }) => (
+            <CircleIcon color={focused ? Colors.MAIN : Colors.GRAY}>
+              <Ionicons name="person" size={30} color={Colors.WHITE} />
+            </CircleIcon>
+          ),
+        }} 
+      
         
       />
     </Tabs>

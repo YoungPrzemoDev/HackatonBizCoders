@@ -1,15 +1,15 @@
 import { Text, View, StyleSheet, Platform } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { addMessageToChat, getMessages } from "./services/messageService";
+import { addMessageToChat, getMessages } from "../services/messageService";
 import { Bubble, BubbleProps, Composer, ComposerProps, GiftedChat, IMessage, InputToolbar, InputToolbarProps, Send, SendProps } from 'react-native-gifted-chat';
 import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
-import { Message } from "./interfaces/Message";
+import { Message } from "../interfaces/Message";
 import tw from 'twrnc';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchCurrentUserId } from "@/components/CardSwiper";
-import { BasicUser } from "./interfaces/User";
-import { fetchGiftedUser } from "./services/userServices";
+import { BasicUser } from "../interfaces/User";
+import { fetchGiftedUser } from "../services/userServices";
 
 const mockedUserId = "1";
 const mockedUserName = "Dorian";
@@ -75,50 +75,6 @@ const ChatDetails: React.FC = () => {
 
     setMessages(previousMessages => GiftedChat.append(previousMessages, newMessage));
   }, [chatId]);
-
-//   const renderInputToolbar = (props: InputToolbarProps<IMessage>) => {
-//     return (
-//       <InputToolbar
-//         {...props}
-//         containerStyle={tw`mx-6 rounded-full mt-4 bg-zinc-700 shadow-lg border-zinc-800 border-t-0 text-slate-200`}
-//         primaryStyle={tw`px-2`}
-//       />
-//     )
-//   }
-
-//   const renderComposer = (props: ComposerProps) => (
-//     <Composer
-//             {...props}
-//             textInputStyle={tw`text-base text-slate-200`} // Tailwind styles for text input
-//             placeholder="Napisz wiadomosc..." // Custom placeholder text
-//     />
-//   )
-
-//   const renderSend = (props: SendProps<IMessage>) => (
-//     <Send {...props}>
-//         <View style={tw`bg-blue-500 rounded-full p-2 mb-3 -mr-4`}>
-//             <Ionicons name="send" size={18} color="white" />
-//         </View>
-//     </Send>
-// );
-
-// const renderBubble = (props: BubbleProps<IMessage>) => (
-//   <Bubble
-//       {...props}
-//       wrapperStyle={{
-//           right: [
-//               tw`bg-green-500`,
-//           ],
-//           left: [
-//               tw`bg-slate-700`,
-//           ],
-//       }}
-//       textStyle={{
-//           right: tw`text-slate-100`, // Text color for sent messages
-//           left: tw`text-slate-200`, // Text color for received messages
-//       }}
-//   />
-// );
 
 const styles = StyleSheet.create({
   container: {

@@ -91,7 +91,6 @@ const Notification = () => {
     },
     scrollView: {
       padding: 16,
-      marginHorizontal: 20,
       backgroundColor: '#374151',
     },
     container: {
@@ -104,16 +103,42 @@ const Notification = () => {
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
     },
+    containerProject: {
+      marginVertical: 8,
+      backgroundColor: '#3F3F46',
+      padding: 12,
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12
+    },
     image: {
       alignSelf: 'center',
       borderRadius: 16,
       marginVertical: 8,
     },
     text: {
-      fontSize: 16,
+      fontSize: 20,
       fontWeight: 'bold',
       color: '#F9FAFB',
       textAlign: 'center',
+      marginBottom: 8,
+    },
+    textMembers: {
+      fontSize: 20,
+      color: '#F9FAFB',
+      textAlign: 'left',
+      marginBottom: 8,
+    },
+    textAbout: {
+      fontSize: 14,
+      color: '#94a3b8',
+      textAlign: 'left',
       marginBottom: 8,
     },
     buttonContainer: {
@@ -155,20 +180,23 @@ const Notification = () => {
       {/* User Information */}
       {user && (
         <View style={styles.container}>
-          <Image source={{ uri: user.profilePicUrl }} style={[styles.image, { width: 112, height: 112 }]} />
+          <Image source={{ uri: user.profilePicUrl }} style={[styles.image, { width: 164, height: 164 }]} />
           <Text style={styles.text}>
             {user.firstName} {user.lastName} {user.userType && `(${user.userType})`}
           </Text>
-          <Text style={[styles.text, { fontSize: 14 }]}>{user.about}</Text>
+          <Text style={[styles.textAbout, { fontSize: 14 }]}>{user.about}</Text>
         </View>
       )}
 
       {/* Project Information */}
       {project && (
-        <View style={styles.container}>
+        <View style={styles.containerProject}>
           <Image source={{ uri: project.imageUrl }} style={[styles.image, { width: 64, height: 64 }]} />
-          <Text style={styles.text}>{project.name}</Text>
-          <Text style={[styles.text, { fontSize: 14 }]}>Members in project: {project.members?.length || 0}</Text>
+          <View>
+            <Text style={styles.text}>{project.name}</Text>
+            <Text style={[styles.textMembers, { fontSize: 14 }]}>Members in project: {project.members?.length || 0}</Text>
+          </View>
+          
         </View>
       )}
 

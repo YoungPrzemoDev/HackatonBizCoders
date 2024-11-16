@@ -44,6 +44,7 @@
     "react-native-gesture-handler": "~2.16.1",
     "react-native-get-random-values": "~1.11.0",
     "react-native-gifted-chat": "^2.6.4",
+    "react-native-global-props": "^1.1.5",
     "react-native-image-slider": "^2.0.3",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-paper": "^5.12.5",
