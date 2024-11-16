@@ -72,37 +72,37 @@ const handleJoinGroup = async (cardId: string) => {
   await addNotification(currentUserId, cardId);
 };
 
-const getCardStyle = (cardIndex, animations) => {
-  const animatedScale = animations[cardIndex].scale;
+// const getCardStyle = (cardIndex, animations) => {
+//   const animatedScale = animations[cardIndex].scale;
 
-  const animatedHeight = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [height * 0.9, height],
-  });
-  const animatedWidth = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [width * 1.1, width],
-  });
-  const animatedRadius = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [30, 1],
-  });
+//   const animatedHeight = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [height * 0.9, height],
+//   });
+//   const animatedWidth = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [width * 1.1, width],
+//   });
+//   const animatedRadius = animatedScale.interpolate({
+//     inputRange: [0.75, 1],
+//     outputRange: [30, 1],
+//   });
 
-  return {
-    width: animatedWidth,
-    height: animatedHeight,
-    transform: [{ scale: animatedScale }],
-    borderRadius: animatedRadius,
-  };
-};
+//   return {
+//     width: animatedWidth,
+//     height: animatedHeight,
+//     transform: [{ scale: animatedScale }],
+//     borderRadius: animatedRadius,
+//   };
+// };
 
-const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
+const Card = ({ card, cardIndex, onPress, animations }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <CardContainer style={getCardStyle(cardIndex, animations)}>
+      <CardContainer>
         <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>

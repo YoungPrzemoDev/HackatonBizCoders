@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, RefreshControl, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, Image, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { db } from '../../config/FirebaseConfig'
 import { collection, getDocs, query, where, DocumentData } from 'firebase/firestore';
@@ -62,45 +62,114 @@ const ChatScreen: React.FC = () => {
     fetchUserChats(true);
   }, []);
 
+  const styles = StyleSheet.create({
+    container: {
+      minHeight: '100%',
+      width: '100%',
+      paddingVertical: 20,
+      paddingHorizontal: 10,
+      backgroundColor: '#374151', // Zinc-800 equivalent
+    },
+    title: {
+      marginTop: 80,
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#E5E7EB', // Slate-200 equivalent
+      textAlign: 'center',
+    },
+    chatListContainer: {
+      marginTop: 20,
+      paddingVertical: 16,
+      paddingHorizontal: 10,
+      borderRadius: 8,
+      gap: 16, // Alternative for `space-y-4`
+    },
+    chatItem: {
+      backgroundColor: '#3F3F46', // Zinc-700 equivalent
+      padding: 12,
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    chatName: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: '#E5E7EB', // Slate-200 equivalent
+    },
+    participantsContainer: {
+      flexDirection: 'row',
+      marginTop: 4,
+      alignItems: 'flex-start',
+    },
+    participantImagesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+    },
+    participantImage: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      marginRight: 4,
+    },
+    participantNamesContainer: {
+      marginLeft: 8,
+      flexDirection: 'row',
+    },
+    participantNameWrapper: {
+      marginRight: 4,
+    },
+    participantName: {
+      fontSize: 12,
+      color: '#9CA3AF', // Slate-400 equivalent
+    },
+  });
+
 
   return (
-    <ScrollView 
-      className='min-h-screen w-screen py-5 px-2 bg-zinc-800'
+    <ScrollView
+      style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <Text className='mt-20 text-2xl font-bold text-slate-200 mx-auto'>Konwersacje projektowe</Text>
-      <View className='mt-5 py-4 px-2 rounded-l space-y-4'>
+      <Text style={styles.title}>Konwersacje projektowe</Text>
+      <View style={styles.chatListContainer}>
         {userChats.map(chat => (
-          <TouchableOpacity key={chat.id} className='bg-zinc-700 p-3 rounded-2xl shadow' onPress={() => navigateToChatDetail(chat.id, chat.name)}>
-            <Text className='text-xl font-semibold text-slate-200'>{chat.name}</Text>
-            <View className='flex-row mt-1 items-start'>
-              <View className='flex-row flex-wrap items-center'>
-                  {chat.participantsDetails?.map(participant => (
-                    <Image
-                      key={participant.id}
-                      source={{ uri: participant.profilePicUrl }}
-                      className='w-5 h-5 rounded-full'
-                    />
-                    
-                  ))}
+          <TouchableOpacity
+            key={chat.id}
+            style={styles.chatItem}
+            onPress={() => navigateToChatDetail(chat.id, chat.name)}
+          >
+            <Text style={styles.chatName}>{chat.name}</Text>
+            <View style={styles.participantsContainer}>
+              <View style={styles.participantImagesContainer}>
+                {chat.participantsDetails?.map(participant => (
+                  <Image
+                    key={participant.id}
+                    source={{ uri: participant.profilePicUrl }}
+                    style={styles.participantImage}
+                  />
+                ))}
               </View>
-              <View className='ml-2 flex-row'>
-                  {chat.participantsDetails?.map((participant, index) => (
-                    <View className='mr-1'>
-                      <Text key={participant.id} className='text-sm text-slate-400'>
-                        {participant.firstName}{index < chat.participantsDetails.length - 1 ? ',' : ""}
-                      </Text>
-                    </View>
-                  ))}
+              <View style={styles.participantNamesContainer}>
+                {chat.participantsDetails?.map((participant, index) => (
+                  <View key={participant.id} style={styles.participantNameWrapper}>
+                    <Text style={styles.participantName}>
+                      {participant.firstName}
+                      {index < chat.participantsDetails.length - 1 ? ',' : ''}
+                    </Text>
+                  </View>
+                ))}
               </View>
             </View>
           </TouchableOpacity>
         ))}
-      </View>    
+      </View>
     </ScrollView>
-  )
+  );
 };
 
 export default ChatScreen;
