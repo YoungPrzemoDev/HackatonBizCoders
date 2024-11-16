@@ -7,234 +7,136 @@ import { ProgressBar, MD3Colors } from 'react-native-paper';
 import styled from 'styled-components/native';
 import { Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchGPTResponse,fetchTagsResponse2 } from './services/gptPromt';
+import { fetchGPTResponseName,fetchTagsResponseDescription,fetchTagsResponseIndustryTags,fetchTagsResponseChallenges  } from './services/gptPromt';
 import {ActivityIndicator, StyleSheet} from 'react-native';
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
-const sections = [
-  { label: 'Name', key: 'name' },
-  { label: 'Description', key: 'description' },
-  { label: 'Overview', key: 'overview' },
-  { label: 'Tags', key: 'tags' },
-];
-
 const BusinessCanvasScreen: React.FC = () => {
-  const [step, setStep] = useState(0);
-  const [name, setName] = useState<string>('');
-  //Enter or generate a short overview of the project.
-  const [description, setDescription] = useState<string>('');
-  const [longDescription, setLongDescription] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
-
-  const totalSteps = sections.length;
+  const [link, setLink] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loading2, setLoading2] = useState(false);
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, totalSteps - 1));
-  const prevStep = () => {
-    if (step === 0) {
-      router.push('/Account');
-    } else {
-      setStep((prev) => Math.max(prev - 1, 0));
+
+  const fetchAndSavePrompts = async (link) => {
+    if (!link) {
+      Alert.alert('Warning', 'Please provide a link.');
+      return;
     }
-  };
-
-  const handleAddAnother = () => {
-    setName('');
-    setDescription('');
-    setLongDescription('');
-    setTags([]);
-    setStep(0);
-    setIsSubmitted(false);
-  };
-
-  const saveProjectToFirestore = async () => {
+  
     try {
+      setLoading(true);
+      console.log('Starting prompt generation and save process for link:', link);
+  
+      // Initialize the results object
+      const results = {
+        name: '',
+        description: '',
+        longDescription: '',
+        tags: [],
+      };
+  
+      // Fetch data from GPT
+      console.log('Fetching name...');
+      results.name = await fetchGPTResponseName(link);
+  
+      console.log('Fetching short description...');
+      results.description = await fetchTagsResponseDescription(link);
+  
+      console.log('Fetching long description...');
+      results.longDescription = await fetchTagsResponseChallenges(link); // Replace with appropriate function for long description.
+  
+      console.log('Fetching tags...');
+      results.tags = await fetchTagsResponseIndustryTags(link); // Assuming industry tags are used as general tags.
+  
+      // Save to Firestore
+      console.log('Fetched all prompts successfully:', results);
+      console.log('Saving project to Firestore...');
       const projectRef = collection(db, 'projects');
       const projectQuery = query(projectRef, orderBy('id', 'desc'), limit(1));
       const projectSnap = await getDocs(projectQuery);
+  
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
-        throw new Error("User ID not found in AsyncStorage.");
+        throw new Error('User ID not found in AsyncStorage.');
       }
-
+  
       let newId = 1;
-      setIsSubmitted(true);
+  
       if (!projectSnap.empty) {
         const highestProject = projectSnap.docs[0].data();
         newId = highestProject.id + 1;
       }
-
-      await setDoc(doc(projectRef, newId.toString()), {
+  
+      const newProject = {
         id: newId,
         userId: userId,
-        name: name,
-        description: description,
-        longDescription: longDescription,
-        tags: tags,
+        ...results,
         createdAt: serverTimestamp(),
-        image: 'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg'
-      });
-
+        image: 'https://c8.alamy.com/comp/2ATD2PG/science-medical-use-technology-medicine-lab-in-hospital-scientist-doing-some-research-vaccine-anti-virus-sampletechnology-medical-of-chemist-scient-2ATD2PG.jpg',
+      };
+  
+      await setDoc(doc(projectRef, newId.toString()), newProject);
+  
+      console.log('Project saved successfully with ID:', newId);
       Alert.alert('Success', 'Project saved successfully!');
-      console.log('Project saved with ID:', newId);
+      setIsSubmitted(true);
     } catch (error) {
-      console.error('Error saving project:', error);
-      Alert.alert('Error', 'Failed to save the project.');
-    }
-  };
-
-  const handleGenerateLongDescription = async () => {
-    if (longDescription) {
-      setLoading(true);
-      try {
-        const DescriptionGenerated = await fetchGPTResponse(longDescription);
-        setDescription(DescriptionGenerated);
-      } catch (error) {
-        console.error('Error generating long description:', error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      Alert.alert('Warning', 'Please provide a description first.');
-    }
-  };
-
-  const handleGenerateTags = async () => {
-    if (longDescription) {
-      setLoading2(true);
-      try {
-        const tagsArray = await fetchTagsResponse2(longDescription);
-        setTags(tagsArray);
-      } catch (error) {
-        console.error('Error generating tags:', error);
-      } finally {
-        setLoading2(false);
-      }
-    } else {
-      Alert.alert('Warning', 'Please provide a description first.');
+      console.error('Error in fetchAndSavePrompts:', error.message);
+      Alert.alert('Error', 'Failed to generate and save prompts.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const renderStepComponent = () => {
-    switch (step) {
-      case 0:
-        return (
-          <StyledTextInput
-            placeholder="Enter project name"
-            value={name}
-            onChangeText={setName}
-            multiline={true}
-            blurOnSubmit={true} 
-          />
-        );
-      case 1:
-        return (
-          <StyledTextInput
-            placeholder="Enter project description"
-            value={longDescription}
-            onChangeText={setLongDescription}
-            multiline={true}
-            blurOnSubmit={true} 
-          />
-        );
-case 2:
-  return (
-    <>
-      <StyledTextInput
-      multiline={true}
-      placeholder="Enter or generate an overview. This will be visible on the main page to other users."
-      value={description}
-      onChangeText={(text) => setDescription(text)}
-      blurOnSubmit={true} // Opcjonalne, aby schować klawiaturę po kliknięciu "Return"
-      style={{ height: 150 }} // Dodanie stylu do zwiększenia wysokości pola
-    />
-      <StyledButton onPress={handleGenerateLongDescription} disabled={loading}>
-        <ButtonText>{loading ? 'Generating...' : 'Generate using ChatGPT'}</ButtonText>
-      </StyledButton>
-    </>
-  );
-case 3:
-  return (
-    <>
-      <StyledTextInput
-       multiline={true}
-        placeholder="Enter tags (separated by commas) or generate them"
-        value={tags.join(', ')}
-        onChangeText={(text) => setTags(text.split(',').map(tag => tag.trim()))}
-        blurOnSubmit={true} // Opcjonalne, aby schować klawiaturę po kliknięciu "Return"
-        style={{ height: 150 }} // 
-      />
-      <StyledButton onPress={handleGenerateTags} disabled={loading2}>
-        <ButtonText>{loading2 ? 'Generating...' : 'Generate Tags'}</ButtonText>
-      </StyledButton>
-    </>
-  );
-      default:
-        return null;
-    }
+    return (
+      <>
+        <StyledTextInput
+          multiline={true}
+          placeholder="Add link"
+          value={link}
+          onChangeText={(text) => setLink(text)}
+          blurOnSubmit={true}
+          style={{ height: 150 }}
+        />
+        <StyledButton onPress={() => fetchAndSavePrompts(link)} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <ButtonText>Generate using ChatGPT</ButtonText>}
+        </StyledButton>
+      </>
+    );
   };
-  
-    //  <ActivityIndicator size="large" />
 
-    const progress = step / (totalSteps - 1);
-    const progressPercentage = Math.round(progress * 100);
   return (
     <FirstContainer>
       {isSubmitted ? (
         <SuccessContainer>
           <SuccessMain>
-          <SuccessText>Your project is now live and attracting interested viewers!</SuccessText>
-            <DoneImage
-              source={require('../assets/images/done (2).png')} />
+            <SuccessText>Your project is now live and attracting interested viewers!</SuccessText>
+            <DoneImage source={require('../assets/images/done (2).png')} />
 
             <ButtonsContainer2>
-            <StyledButton onPress={() => {
-            handleAddAnother();
-            }}>
-              <ButtonText>Add next</ButtonText>
-            </StyledButton>
-            <StyledButton onPress={() => router.push('/Account')}>
-              <ButtonText>Menu</ButtonText>
-            </StyledButton>
+              <StyledButton onPress={() => setIsSubmitted(false)}>
+                <ButtonText>Add Next</ButtonText>
+              </StyledButton>
+              <StyledButton onPress={() => router.push('/Account')}>
+                <ButtonText>Menu</ButtonText>
+              </StyledButton>
             </ButtonsContainer2>
           </SuccessMain>
         </SuccessContainer>
       ) : (
         <MainContainer>
-          <UpContainer>
-            <MainText>
-              <ProgresText>Your project is {progressPercentage}% complete</ProgresText>
-            </MainText>
-            <ProContainer>
-              <StyledProgressBar2 progress={progress} color="black" />
-            </ProContainer>
-          </UpContainer>
-          <DownContainer>
-          {renderStepComponent()}
-          </DownContainer>
-          <ButtonsContainer>
-            <StyledButton onPress={prevStep}>
-              <ButtonText>Back</ButtonText>
-            </StyledButton>
-            {step < totalSteps - 1 ? (
-              <NextButton onPress={nextStep}>
-                <ButtonText>Next</ButtonText>
-              </NextButton>
-            ) : (
-              <NextButton onPress={saveProjectToFirestore}>
-                <ButtonText>Create</ButtonText>
-              </NextButton>
-            )}
-          </ButtonsContainer>
+          <DownContainer>{renderStepComponent()}</DownContainer>
         </MainContainer>
       )}
     </FirstContainer>
   );
 };
+
+
 
 
 const SuccessContainer = styled.View`

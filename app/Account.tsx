@@ -10,7 +10,8 @@ import {
   Pressable,
   ScrollView,
   GestureResponderEvent,
-  Dimensions
+  Dimensions,
+  StatusBar
 } from "react-native";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -74,6 +75,7 @@ const Account = () => {
 
 
     <Container>
+               <StatusBar translucent backgroundColor="red" barStyle="light-content" />
       <CenterContainer>
         <ProfileContainer>
           <ProfileImage

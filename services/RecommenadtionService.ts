@@ -1,6 +1,6 @@
 import { UserInteraction } from "@/app/interfaces/User";
 import axios from "axios";
-const BASE_URL = "http://172.19.0.124:5041";
+const BASE_URL = "http://172.19.0.129:5041";
 
 const api = axios.create({
   baseURL: BASE_URL,

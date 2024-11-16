@@ -181,7 +181,7 @@ export default function RegisterSciencist() {
                                 value={form.about}
                             />
                         </InputGroup>
-
+                        
                         <FormAction>
                             <Button onPress={addUserWithIncrement}>
                                 <ButtonText>Sign up</ButtonText>

@@ -190,7 +190,6 @@ const DownContainer = styled.View`
 `;
   //background-color: red;
 const LeftContainer = styled.View`
-  margin-left:20px;
   width: 33.3%;
   height: 100%;
   align-items: center;
