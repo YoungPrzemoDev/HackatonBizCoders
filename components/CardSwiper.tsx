@@ -23,8 +23,17 @@ import {
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { fetchProjects, ProjectData } from "../services/FirebaseService";
-import { getRecommendation } from "../services/RecommenadtionService";
+import {
+  addProjectUser,
+  fetchProjects,
+  ProjectData,
+  fetchUserProjects,
+} from "../services/FirebaseService";
+import { UserInteraction } from "@/app/interfaces/User";
+import {
+  getRecommendation,
+  sendInterraction,
+} from "@/services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -93,7 +102,7 @@ const getCardStyle = (cardIndex, animations) => {
   };
 };
 
-const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
+const Card = ({ card, cardIndex, onPress, animations }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -116,27 +125,30 @@ const CardSwiper = () => {
   //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState<ProjectData[]>([]);
   const [data, setData] = useState<ProjectData[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [resetKey, setResetKey] = useState(0);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
-
+  const [userID, setUserID] = useState<string>(null);
+  const [characters, setCharacters] = useState<any[]>([]); // Tablica na projekty z bazy
+  const [lastDirection, setLastDirection] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
+  const INITIAL_CARD_COUNT = 4;
+  let counter = 0;
   const [animations, setAnimations] = useState([]);
 
   console.log("Jestem w swiper");
 
   useEffect(() => {
-    // Fetch projects when the component mounts
     const fetchData = async () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
+        setUserID(userId);
         console.log(userId);
         const recommendation = await getRecommendation(userId);
         console.log(recommendation);
-        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
-        //useState(data); // Set fetched data as visible cards
-        //console.log(fetchedData)
-        //sortowanie
         console.log(
           "Before sorting:",
           fetchedData.map((item) => item.id)
@@ -150,25 +162,16 @@ const CardSwiper = () => {
           })
         );
 
-        // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
         sortedData.sort((a, b) => a.index - b.index);
         const finalSortedData = sortedData.map(({ index, ...item }) => item);
-
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
         console.log(
           "After sorting:",
           finalSortedData.map((item) => item.id)
         );
 
-        ////////
         setData(finalSortedData);
-        setVisibleCards(finalSortedData);
+        setIsLoading(false);
+        console.log(fetchedData[0].id);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -176,6 +179,75 @@ const CardSwiper = () => {
     };
     fetchData();
   }, []);
+
+  const swiped = async (direction: string, projectID: string) => {
+    setLastDirection(direction);
+    const userId = await AsyncStorage.getItem("userId");
+    if (direction == "right") {
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID, userId);
+      console.log("Teraz Otwarty projekt ", projectID);
+      setModalVisible(true);
+
+      const project: ProjectData = data.find(
+        (project) => project.id === projectID
+      );
+      const newInteraction: UserInteraction = {
+        projectID: project.id,
+        userId: userID,
+      };
+      console.log("Pisze co wysyłam", newInteraction);
+      sendInterraction(newInteraction);
+      console.log("wyszukany projekt", project.name);
+      //usuwam projekt wyslany
+      counter++;
+      console.log(counter);
+      if (counter == INITIAL_CARD_COUNT) {
+        //!!tutaj trzeba wlaczyc loading screen
+
+        setIsLoading(true);
+        const recommendation1 = await getRecommendation(userId);
+        const fetchedData1: ProjectData[] = await fetchProjects();
+        console.log(
+          "Before sorting:",
+          fetchedData1.map((item) => item.id)
+        );
+
+        const sortedData1 = await Promise.all(
+          fetchedData1.map(async (item) => {
+            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+            const index = await recommendation1.indexOf(item.id);
+            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+          })
+        );
+
+        sortedData1.sort((a, b) => a.index - b.index);
+        const finalSortedData1 = sortedData1.map(({ index, ...item }) => item);
+        console.log(
+          "After sorting:",
+          finalSortedData1.map((item) => item.id)
+        );
+
+        console.log(finalSortedData1);
+        setData([]);
+        //pobranie tablicy wyswietlonych projektow oraz wyswietlenie tych innych
+        const array = await fetchUserProjects(userID);
+        console.log("array ::::", array);
+        const filteredData = finalSortedData1.filter(
+          (project) => !array.includes(project.id)
+        );
+        setData((prevData) => [...prevData, ...filteredData]);
+        setResetKey((prevKey) => prevKey + 1);
+        setIsLoading(false);
+        counter = 0;
+        //!!tu wylaczyc loading screen
+      }
+    } else if (direction == "left") {
+      counter++;
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID, userId);
+    }
+  };
 
   useEffect(() => {
     if (data.length > 0) {
@@ -250,13 +322,13 @@ const CardSwiper = () => {
     });
   };
 
-  const handleCardSwipe = (cardIndex: number) => {
+  const handleCardSwipe = async (direction: string, cardIndex: number) => {
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
+    await swiped(direction, cardId.toString());
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
-
     callCount += 1;
   };
 
@@ -315,42 +387,15 @@ const CardSwiper = () => {
               <StyledScrollView>
                 <InfoContainer>
                   <TitleText>Key partners </TitleText>
-                  <SectionText> {selectedCard.keyPartners} </SectionText>
+                  <SectionText> {selectedCard.description} </SectionText>
                 </InfoContainer>
                 <InfoContainer>
                   <TitleText>Key activities </TitleText>
-                  <SectionText> {selectedCard.keyActivities} </SectionText>
+                  <SectionText> {selectedCard.image} </SectionText>
                 </InfoContainer>
                 <InfoContainer>
                   <TitleText>Key resources </TitleText>
-                  <SectionText> {selectedCard.keyResources} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Value proposition </TitleText>
-                  <SectionText> {selectedCard.valuePropositions} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer relationships </TitleText>
-                  <SectionText>
-                    {" "}
-                    {selectedCard.customerRelationships}{" "}
-                  </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Chanels </TitleText>
-                  <SectionText> {selectedCard.channels} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer segments </TitleText>
-                  <SectionText> {selectedCard.customerSegments} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Cost structure </TitleText>
-                  <SectionText> {selectedCard.costStructure} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Revenue Streams </TitleText>
-                  <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  <SectionText> {selectedCard.longDescription} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>
@@ -373,7 +418,7 @@ const CardSwiper = () => {
     const projectId = visibleCards[cardIndex].id;
     setCurrentCardID(projectId);
 
-    handleCardSwipe(cardIndex);
+    handleCardSwipe("right", cardIndex);
     setShowOverlay(true);
     animateButtons();
   };
@@ -449,7 +494,7 @@ const CardSwiper = () => {
               horizontalSwipe={expandedCardId === null}
               onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
               onSwipedLeft={(cardIndex) => {
-                handleCardSwipe(cardIndex);
+                handleCardSwipe("left", cardIndex);
                 console.log("Left Swipe", cardIndex);
               }}
               onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
