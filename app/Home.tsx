@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { router } from "expo-router";
 import React from "react";
-import { Dimensions, Text, TouchableOpacity, ImageBackground } from "react-native";
+import { Dimensions, Text, TouchableOpacity, ImageBackground, SafeAreaView } from "react-native";
 import styled from "styled-components/native";
 
 const screenheight = Dimensions.get('window').height;
@@ -47,16 +47,15 @@ const Home = () => {
   );
 };
 
-
-const Container = styled.View`
+const Container =styled.View`
   flex: 1;
-  background-color: #fff;
+  background-color: #000; /* Opcjonalny kolor tła podczas ładowania obrazu */
 `;
 
 const StyledImageBackground = styled.ImageBackground`
   flex: 1;
-  resize-mode: cover;
-  justify-content: center;
+   width: 100%;
+  height: 100%;
 `;
 
 const MainContent = styled.View`
