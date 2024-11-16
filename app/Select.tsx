@@ -126,7 +126,7 @@ const Select = () => {
               <Label>Scientist</Label>
           </LeftContainer>
           <RightContainer>
-          <TouchableOpacity onPress={handleInvestorClick}>
+          <TouchableOpacity onPress={() => router.push('/RegisterScientist')}>
             <AnimatedRightImage2
               source={require('../assets/images/invest2.png')}
               resizeMode="contain"
@@ -136,7 +136,7 @@ const Select = () => {
             <Label>Investor</Label>
           </RightContainer>
           <RightContainer2>
-          <TouchableOpacity onPress={handleBusinessmanClick}>
+          <TouchableOpacity onPress={() => router.push('/RegisterScientist')}>
             <AnimatedRightImage
               source={require('../assets/images/biz2.png')}
               resizeMode="contain"

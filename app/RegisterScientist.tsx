@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Dimensions, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MultiSelect } from 'react-native-element-dropdown';
 import { db } from '../config/FirebaseConfig';
 import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, getDocs, limit, orderBy } from "firebase/firestore";
 import { fetchGPTResponse, fetchTagsResponse3, fetchTagsResponse4, fetchTagsResponse5 } from './services/gptPromt';
+import Toast from 'react-native-toast-message';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -130,6 +131,19 @@ export default function RegisterSciencist() {
   
       console.log("Scientist added with ID:", newId);
       Alert.alert("Success", "Scientist account created!");
+
+      Toast.show({
+        type: 'success',
+        text1: "Successfull",
+        text2: "Research Paper successfully embedded, click to Login",
+        position: 'top',
+        topOffset: 10,
+        onPress: () => router.push({
+          pathname: '/Login',
+          params: { emailProp: form.email, passwordProp: form.password }
+        })
+      })
+
     } catch (e) {
       console.error("Error adding scientist with incremented ID:", e);
       Alert.alert("Error", "Failed to create scientist account.");
@@ -138,6 +152,7 @@ export default function RegisterSciencist() {
 
   return (
     <Container>
+      <Toast />
       <InnerContainer>
         <KeyboardAwareScrollView>
           <Header>
@@ -172,7 +187,7 @@ export default function RegisterSciencist() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   onChangeText={login => setForm({ ...form, login })}
-                  placeholder="DanyCaramba"
+                  placeholder="johnDoe"
                   value={form.login}
                 />
               </InputGroupHalf>
