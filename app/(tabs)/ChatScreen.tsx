@@ -68,10 +68,9 @@ const ChatScreen: React.FC = () => {
       width: '100%',
       paddingVertical: 20,
       paddingHorizontal: 10,
-      backgroundColor: '#374151', // Zinc-800 equivalent
+      backgroundColor: '#27272a', // Zinc-800 equivalent
     },
     title: {
-      marginTop: 80,
       fontSize: 24,
       fontWeight: 'bold',
       color: '#E5E7EB', // Slate-200 equivalent
@@ -85,7 +84,7 @@ const ChatScreen: React.FC = () => {
       gap: 16, // Alternative for `space-y-4`
     },
     chatItem: {
-      backgroundColor: '#3F3F46', // Zinc-700 equivalent
+      backgroundColor: '#3f3f46', // Zinc-700 equivalent
       padding: 12,
       borderRadius: 16,
       shadowColor: '#000',

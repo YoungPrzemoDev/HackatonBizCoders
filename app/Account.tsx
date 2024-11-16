@@ -153,7 +153,7 @@ const Account = () => {
 const Container = styled(ScrollView).attrs({
   contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
 })`
-    background-color:  #1e1e1e;
+    background-color:  #27272a;
         padding-bottom:65px;
   `;
 

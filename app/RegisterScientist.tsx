@@ -254,7 +254,7 @@ export default function RegisterSciencist() {
             </InputGroup>
 
             <FormAction>
-              <Button onPress={addUserWithIncrement}>
+              <Button onPress={handleGenerateLongDescription}>
                 <ButtonText>Sign up</ButtonText>
               </Button>
             </FormAction>

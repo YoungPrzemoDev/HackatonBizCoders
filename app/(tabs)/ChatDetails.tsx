@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
       flex: 1,
       paddingBottom: 10,
       paddingTop: 16,
-      backgroundColor: '#374151', // Zinc-800 equivalent
+      backgroundColor: '#27272a', // Zinc-800 equivalent
       paddingHorizontal: 8,
   },
   inputToolbarContainer: {
