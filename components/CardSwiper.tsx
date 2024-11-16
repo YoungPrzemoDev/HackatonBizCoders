@@ -40,6 +40,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { addNotification } from "@/app/services/notificationService";
+import * as Progress from 'react-native-progress';
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -160,7 +161,7 @@ const handleJoinFavorites = async (cardId: string) => {
 
 };
 
-const fetchCurrentUserId = async () => {
+export const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
   console.log("Fetched currentUserId:", currentUserId);
@@ -262,12 +263,14 @@ const CardSwiper = () => {
         setData(finalSortedData);
         setIsLoading(false);
         console.log(fetchedData[0].id);
+
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
       }
     };
     fetchData();
+    setIsLoading(false);
   }, []);
 
   const swiped = async (direction: string, projectID: string) => {
@@ -630,7 +633,7 @@ const CardSwiper = () => {
           </>
         )
       ) : (
-        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
+        <Progress.CircleSnail color={['red', 'green', 'blue']} size={100} strokeCap="square" animating={true} borderWidth={20}/>
       )}
     </MainContainer>
   );
