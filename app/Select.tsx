@@ -193,6 +193,7 @@ const LeftContainer = styled.View`
   width: 33.3%;
   height: 100%;
   align-items: center;
+  
 `;
 //background-color: blue;
 const RightContainer = styled.View`

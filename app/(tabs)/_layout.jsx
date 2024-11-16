@@ -75,7 +75,7 @@ export default function TabLayout() {
         name='profile'
         options={{
           title: 'PROFILE',
-          headerShown: true,
+          headerShown: false,
           tabBarIcon: ({ focused  }) => (
             <CircleIcon color={focused ? Colors.MAIN : Colors.GRAY}>
               <Ionicons name="person" size={30} color={Colors.WHITE} />

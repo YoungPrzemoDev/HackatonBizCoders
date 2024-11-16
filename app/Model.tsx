@@ -96,14 +96,14 @@ const BusinessCanvasScreen: React.FC = () => {
       <>
         <StyledTextInput
           multiline={true}
-          placeholder="Add link"
+          placeholder="Add link to your start-up"
           value={link}
           onChangeText={(text) => setLink(text)}
           blurOnSubmit={true}
           style={{ height: 150 }}
         />
         <StyledButton onPress={() => fetchAndSavePrompts(link)} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <ButtonText>Generate using ChatGPT</ButtonText>}
+          {loading ? <ActivityIndicator color="#fff" /> : <ButtonText>Generate using AI</ButtonText>}
         </StyledButton>
       </>
     );
