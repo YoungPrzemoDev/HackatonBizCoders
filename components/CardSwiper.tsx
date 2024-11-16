@@ -468,6 +468,7 @@ const CardSwiper = () => {
                       onPress={() => {
                         console.log("Add to favorites");
                         console.log(currentCardID);
+                        
                         closeOverlay();
                       }}
                     >

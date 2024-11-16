@@ -141,7 +141,7 @@ const Account = () => {
             </RowInfoC>
             <RowInfoC>
               <StatValueC>Create a new project!</StatValueC>
-              <StatLabel> With Business Canvas Model. </StatLabel>
+              <StatLabel>With the help of AI </StatLabel>
             </RowInfoC>
           </CanvasRow>
         </UnderProfile>
@@ -154,6 +154,7 @@ const Container = styled(ScrollView).attrs({
   contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
 })`
     background-color:  #1e1e1e;
+        padding-bottom:65px;
   `;
 
 const CenterContainer = styled.View`
@@ -161,6 +162,7 @@ const CenterContainer = styled.View`
      height:100%;
      align-items: center;
      border-radius:20px;
+     padding-bottom:65px;
 
   `;
 
@@ -177,6 +179,7 @@ const ProfileContainer = styled.View`
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
+  padding-bottom:15px;
   `;
 
 

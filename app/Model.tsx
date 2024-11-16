@@ -2,12 +2,15 @@ import { db } from '@/config/FirebaseConfig';
 import { router } from 'expo-router';
 import { collection, doc, getDocs, limit, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, Dimensions } from 'react-native';
+import { Alert, Dimensions, ScrollView } from 'react-native';
 import { ProgressBar, MD3Colors } from 'react-native-paper';
 import styled from 'styled-components/native';
 import { Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchGPTResponse,fetchTagsResponse2 } from './services/gptPromt';
+import {ActivityIndicator, StyleSheet} from 'react-native';
+import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+
 const screenWidth = Dimensions.get('window').width;
 
 const sections = [
@@ -20,6 +23,7 @@ const sections = [
 const BusinessCanvasScreen: React.FC = () => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState<string>('');
+  //Enter or generate a short overview of the project.
   const [description, setDescription] = useState<string>('');
   const [longDescription, setLongDescription] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
@@ -123,6 +127,8 @@ const BusinessCanvasScreen: React.FC = () => {
             placeholder="Enter project name"
             value={name}
             onChangeText={setName}
+            multiline={true}
+            blurOnSubmit={true} 
           />
         );
       case 1:
@@ -131,17 +137,21 @@ const BusinessCanvasScreen: React.FC = () => {
             placeholder="Enter project description"
             value={longDescription}
             onChangeText={setLongDescription}
+            multiline={true}
+            blurOnSubmit={true} 
           />
         );
 case 2:
   return (
     <>
       <StyledTextInput
-       // multiline={true}
-        placeholder="Enter or generate an overview. This will be visible on the main page to other users."
-        value={description}
-        onChangeText={setDescription}
-      />
+      multiline={true}
+      placeholder="Enter or generate an overview. This will be visible on the main page to other users."
+      value={description}
+      onChangeText={(text) => setDescription(text)}
+      blurOnSubmit={true} // Opcjonalne, aby schować klawiaturę po kliknięciu "Return"
+      style={{ height: 150 }} // Dodanie stylu do zwiększenia wysokości pola
+    />
       <StyledButton onPress={handleGenerateLongDescription} disabled={loading}>
         <ButtonText>{loading ? 'Generating...' : 'Generate using ChatGPT'}</ButtonText>
       </StyledButton>
@@ -151,10 +161,12 @@ case 3:
   return (
     <>
       <StyledTextInput
-       // multiline={true}
+       multiline={true}
         placeholder="Enter tags (separated by commas) or generate them"
         value={tags.join(', ')}
         onChangeText={(text) => setTags(text.split(',').map(tag => tag.trim()))}
+        blurOnSubmit={true} // Opcjonalne, aby schować klawiaturę po kliknięciu "Return"
+        style={{ height: 150 }} // 
       />
       <StyledButton onPress={handleGenerateTags} disabled={loading2}>
         <ButtonText>{loading2 ? 'Generating...' : 'Generate Tags'}</ButtonText>
@@ -166,10 +178,10 @@ case 3:
     }
   };
   
+    //  <ActivityIndicator size="large" />
 
-
-  const progress = (step + 1) / totalSteps;
-  const progressPercentage = Math.round(progress * 100);
+    const progress = step / (totalSteps - 1);
+    const progressPercentage = Math.round(progress * 100);
   return (
     <FirstContainer>
       {isSubmitted ? (
@@ -254,7 +266,7 @@ const SuccessText = styled.Text`
 `;
 
 const StyledProgressBar2 = styled(ProgressBar)`
-  width: ${screenWidth - 80}px; /* Adjust this value to decrease the width */
+  width: ${screenWidth - 110}px; /* Adjust this value to decrease the width */
   margin-bottom: 20px;
   height: 15px;
   border-radius:20px;
@@ -262,7 +274,7 @@ const StyledProgressBar2 = styled(ProgressBar)`
 
 const ProgresText = styled.Text`
   color: white;
-  font-size: 26px;
+  font-size: 20px;
 
 `;
 
@@ -274,20 +286,31 @@ const StyledTextInput = styled.TextInput`
   margin-bottom: 20px;
   min-height: 160px;
   color:white;
+ 
 `;
-
+ // margin-top:-80px;
 const StyledQuestions = styled.Text`
   color:#c1c1c1;
   padding: 5px;
   width: 90%;
 `;
 
-const FirstContainer = styled.View`
-  flex:1;
-  align-items: center;
-  background-color: #1e1e1e;
-  justify-content: center;
-`;
+// const FirstContainer = styled.View`
+//   flex:1;
+//   align-items: center;
+//   background-color: #1e1e1e;
+//   justify-content: center;
+  
+// `;
+
+
+const FirstContainer = styled(ScrollView).attrs({
+  contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
+})`
+    background-color:  #1e1e1e;
+        padding-bottom:65px;
+  `;
+
 const MainContainer = styled.View`
   align-items: top;
   width:100%;
@@ -301,6 +324,7 @@ const MainText = styled.View`
   justify-content: center;
   align-items: center;
   padding: 20px;
+  
 
 `;
 
@@ -311,6 +335,7 @@ const UpContainer = styled.View`
   align-items: center;
   background-color: #3d3d3d;
   border-radius:20px;
+  
 `;
 
 const ProContainer = styled.View`
@@ -318,14 +343,17 @@ const ProContainer = styled.View`
   height: 50px;
   justify-content: center;
   align-items: center;
+  
 
 `;
 
 const DownContainer = styled.View`
   width: 100%;
-  min-height: 500px;
+  min-height: 450px;
   align-items: center;
   justify-content: center;
+
+  
  
 `;
 

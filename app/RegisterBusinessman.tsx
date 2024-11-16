@@ -11,6 +11,7 @@ import { doc, getDoc, getDocs, increment, limit, orderBy, query, serverTimestamp
 import { collection, addDoc } from "firebase/firestore"; 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore"; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -30,6 +31,11 @@ export default function RegisterSciencist() {
 
     async function addUserWithIncrement() {
       try {
+
+        const userType = await AsyncStorage.getItem('userRole');
+    
+        // Sprawdzenie, czy userType jest ustawione, jeśli nie, przypisujemy wartość domyślną
+        const resolvedUserType = userType || 'Unknown';
         const userRef = collection(db, "users");
     
         // Query to find the document with the highest 'id'
@@ -50,7 +56,7 @@ export default function RegisterSciencist() {
           firstName: form.firstName,
           lastName: form.lastName,
           about: form.about,
-          userType: 'Businessman',
+          userType: resolvedUserType,
           joinDate: serverTimestamp(),
         });
     
