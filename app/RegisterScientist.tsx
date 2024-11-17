@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Dimensions, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MultiSelect } from 'react-native-element-dropdown';
 import { db } from '../config/FirebaseConfig';
 import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, getDocs, limit, orderBy } from "firebase/firestore";
 import { fetchGPTResponse, fetchTagsResponse3, fetchTagsResponse4, fetchTagsResponse5 } from './services/gptPromt';
+import Login from './Login';
 
 const screenWidth = Dimensions.get('window').width;
-
 export default function RegisterSciencist() {
   const [form, setForm] = useState({
     email: '',
@@ -21,9 +21,7 @@ export default function RegisterSciencist() {
     about: '',
   });
 
-  const [description, setDescription] = useState<string[]>([]);
-  const [tags, setTags] = useState([]);
-  const [problems, setProblems] = useState([]);
+
   const data = [
     { label: 'Biotechnology', value: 'biotech' },
     { label: 'Artificial Intelligence', value: 'ai' },
@@ -127,9 +125,8 @@ export default function RegisterSciencist() {
         userType: "Scientist",
         joinDate: serverTimestamp(), // Add timestamp for join date
       });
-  
       console.log("Scientist added with ID:", newId);
-      Alert.alert("Success", "Scientist account created!");
+
     } catch (e) {
       console.error("Error adding scientist with incremented ID:", e);
       Alert.alert("Error", "Failed to create scientist account.");

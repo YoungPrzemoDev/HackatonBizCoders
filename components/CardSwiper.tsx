@@ -1,5 +1,5 @@
 import { db } from "@/config/FirebaseConfig";
-import { Timestamp } from "firebase/firestore";
+import { query, Timestamp, where } from "firebase/firestore";
 import {
   collection,
   doc,
@@ -21,6 +21,7 @@ import {
   Text,
   View,
   ScrollView,
+  Alert,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
@@ -40,6 +41,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { addNotification } from "@/app/services/notificationService";
+import { fetchTagsResponse6 } from "@/app/services/gptPromt";
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -160,7 +162,7 @@ const handleJoinFavorites = async (cardId: string) => {
 
 };
 
-const fetchCurrentUserId = async () => {
+export const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
   console.log("Fetched currentUserId:", currentUserId);
@@ -229,12 +231,88 @@ const CardSwiper = () => {
 
   console.log("Jestem w swiper");
 
+  async function handleGenerateLongDescription1(prompts) {
+    if (prompts && prompts.length) {
+      try {
+        const results = await Promise.all(
+          prompts.map(prompt => fetchTagsResponse6(prompt)) // Pass each prompt to the fetch function
+        );
+        return results; // Array of results for each project
+      } catch (error) {
+        console.error("Error generating long descriptions:", error);
+      }
+    } else {
+      Alert.alert("Warning", "Please provide prompts first.");
+    }
+  }
+
+  async function updateProjectsWithInsights(db, projectsWithInsights) {
+    try {
+      for (const project of projectsWithInsights) {
+        // Reference to the specific project document
+        const projectDocRef = doc(db, "projects", project.id);
+  
+        // Update the document with the new `insight` field
+        await updateDoc(projectDocRef, {
+          insight: project.insight
+        });
+  
+        console.log(`Updated project ${project.id} with insight: ${project.insight}`);
+      }
+  
+      console.log("All projects updated successfully!");
+    } catch (error) {
+      console.error("Error updating projects with insights:", error);
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
         setUserID(userId);
         console.log(userId);
+        const projectsRef = collection(db, "projects"); // Reference to the 'projects' collection
+        const querySnapshot = await getDocs(projectsRef); // Get all documents from the collection
+
+        const projects = querySnapshot.docs.map(doc => doc.data()); // Map over docs and get the data
+        
+        console.log(projects);
+
+        const userRef = collection(db, "users"); // Reference to the 'projects' collection
+        const q = query(userRef, where('id', '==', userId)); 
+        const querySnapshot2 = await getDocs(q);
+        const projectList = [];
+        querySnapshot2.forEach((doc) => {
+          projectList.push({
+            about: doc.data().about,
+            name: Array.isArray(doc.data().description) ? doc.data().description.join(", ") : doc.data().description
+          });
+        });
+
+        const promptData = `About me: ${projectList[0].about}. Key points: ${projectList[0].name}.`;
+
+        // Prepare a new prompt that incorporates project details
+        const projectPrompts = projects.map(project => {
+          const projectDetails = `Project name: ${project.name || project.description}. Long description: ${project.longDescription || "N/A"}`;
+          return `${promptData} How can I help with this project, tell me this in one sentence? ${projectDetails}`;
+        });
+
+        console.log("Prepared Prompts for Projects:", projectPrompts);
+
+        const results = await handleGenerateLongDescription1(projectPrompts);
+        console.log("Results for Projects:", results);
+
+        // Optionally associate results with projects
+        const projectsWithInsights = projects.map((project, index) => ({
+          ...project,
+          insight: results[index] || "No insight generated"
+        }));
+
+        console.log("Projects with Insights:", projectsWithInsights);
+        await updateProjectsWithInsights(db, projectsWithInsights);
+
+        
         const recommendation = await getRecommendation(userId);
         console.log(recommendation);
         // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
@@ -255,13 +333,15 @@ const CardSwiper = () => {
         sortedData.sort((a, b) => a.index - b.index);
         const finalSortedData = sortedData.map(({ index, ...item }) => item);
         console.log(
-          "After sorting:",
+          "xddd sorting:",
           finalSortedData.map((item) => item.id)
         );
         setVisibleCards(finalSortedData);
         setData(finalSortedData);
+        
+        
+
         setIsLoading(false);
-        console.log(fetchedData[0].id);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
@@ -315,11 +395,11 @@ const CardSwiper = () => {
         sortedData1.sort((a, b) => a.index - b.index);
         const finalSortedData1 = sortedData1.map(({ index, ...item }) => item);
         console.log(
-          "After sorting:",
+          "xddd:",
           finalSortedData1.map((item) => item.id)
         );
 
-        console.log(finalSortedData1);
+        console.log("xddd", finalSortedData1);
         setData([]);
         //pobranie tablicy wyswietlonych projektow oraz wyswietlenie tych innych
         const array = await fetchUserProjects(userID);
