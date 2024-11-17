@@ -51,8 +51,11 @@ export default function Login() {
           const userData = doc.data();
           if (userData.password === password) {
             userFound = true;
-            await AsyncStorage.setItem('userId', doc.id); // Save userId to AsyncStorage
+            await AsyncStorage.setItem('userId', doc.id);
+            await AsyncStorage.setItem('userType', userData.userType); // Save userId to AsyncStorage
             await AsyncStorage.setItem('userFirstName', userData.firstName);
+            // console.log("login type")
+            // console.log(userData.userType)
             Alert.alert("Login Successful", "Welcome back!");
             const sendRequest = sendUser(doc.id);
 

@@ -9,6 +9,7 @@ import Dashbords from '../Dashbords';
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
 import CardSwiper from '@/components/CardSwiper';
+import CardSwiperForbusinessMan from '@/components/CardSwiperForbusinessMan';
 
 
 const MainContainer = styled.View`
@@ -94,12 +95,44 @@ export default  function home() {
   // const recommendation =  getRecommendation(5);
 
 
+  console.log("eesaas");
+  //console.log(userData.userType);
 
+  const [userType, setUserType] = useState(null);
 
+  // Funkcja asynchroniczna do pobierania `userType` z `AsyncStorage`
+  const getUserType = async () => {
+    try {
+      const type = await AsyncStorage.getItem('userType');
+      if (type !== null) {
+        console.log('Pobrany typ użytkownika:', type);
+        setUserType(type);  // Aktualizacja stanu `userType`
+      } else {
+        console.log('Nie znaleziono typu użytkownika.');
+      }
+    } catch (error) {
+      console.error('Błąd podczas pobierania typu użytkownika z AsyncStorage', error);
+    }
+  };
+
+  // Użyj `useEffect`, aby wywołać `getUserType` po zamontowaniu komponentu
+  useEffect(() => {
+    getUserType(); // Pobranie typu użytkownika
+  }, []); // [] oznacza, że kod wykona się tylko raz - przy pierwszym renderowaniu
+
+  // Renderowanie komponentu w zależności od wartości `userType`
   return (
     <MainContainer>
-      {userData?.userType === 'Businessman' ? <Dashbords /> : <CardSwiper />}
+      {userType === 'Businessman' ? (
+        <CardSwiperForbusinessMan />
+      ) : userType === 'investor' ? (
+        <Dashbords/>
+      ) : (
+        <CardSwiper />
+      )}
       <Toast />
     </MainContainer>
-  )
-}
+  );
+};
+
+
