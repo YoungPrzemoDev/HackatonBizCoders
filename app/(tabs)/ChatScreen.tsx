@@ -5,13 +5,15 @@ import { collection, getDocs, query, where, DocumentData } from 'firebase/firest
 import { Chat, ChatWithId, ChatWithParticipants } from '../interfaces/Chat';
 import { fetchParticipants } from '../services/userServices';
 import { useRouter } from 'expo-router';
+import { fetchCurrentUserId } from '@/components/CardSwiper';
 
-const mockedUserId = "1";
+
 
 const ChatScreen: React.FC = () => {
   const [userChats, setUserChats] = useState<ChatWithParticipants[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const [userId, setUserId] = useState("");
 
   const navigateToChatDetail = (chatId: string, chatName: string) => {
     router.push({
@@ -20,13 +22,13 @@ const ChatScreen: React.FC = () => {
     });
   }
 
-  const fetchUserChats = async (refresh = false) => {
+  const fetchUserChats = async (refresh = false, userId: string) => {
     if (refresh) setRefreshing(true);
     try {
       const chatsRef = collection(db, 'chats');
       const q = query(
         chatsRef,
-        where('participants', 'array-contains', mockedUserId),
+        where('participants', 'array-contains', userId),
         where('active', '==', 1)
       );
 
@@ -54,12 +56,26 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  const fetchUserId = async () => {
+    return await fetchCurrentUserId();
+  }
+
   useEffect(() => {
-    fetchUserChats();
+    const fetchAndSetChats = async () => {
+      try {
+        const userId = await fetchUserId();
+        setUserId(userId)
+        fetchUserChats(false, userId); // Ensure userId is passed as a resolved string
+      } catch (error) {
+        console.error('Failed to fetch user ID or chats:', error);
+      }
+    };
+  
+    fetchAndSetChats(); // Call the async function
   }, []);
 
   const onRefresh = useCallback(() => {
-    fetchUserChats(true);
+    fetchUserChats(true, userId);
   }, []);
 
   const styles = StyleSheet.create({

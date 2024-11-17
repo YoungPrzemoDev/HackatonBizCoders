@@ -21,6 +21,7 @@ import {
   Text,
   View,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
@@ -633,7 +634,7 @@ const CardSwiper = () => {
           </>
         )
       ) : (
-        <Progress.CircleSnail color={['red', 'green', 'blue']} size={100} strokeCap="square" animating={true} borderWidth={20}/>
+        <ActivityIndicator size="large" color="#3B82F6" />
       )}
     </MainContainer>
   );

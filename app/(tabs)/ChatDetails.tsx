@@ -1,15 +1,16 @@
-import { Text, View, StyleSheet, Platform } from "react-native";
+import { Text, View, StyleSheet, Platform, ActivityIndicator } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { addMessageToChat, getMessages } from "../services/messageService";
 import { Bubble, BubbleProps, Composer, ComposerProps, GiftedChat, IMessage, InputToolbar, InputToolbarProps, Send, SendProps } from 'react-native-gifted-chat';
-import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
+import { collection, DocumentData, onSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 import { Message } from "../interfaces/Message";
 import tw from 'twrnc';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchCurrentUserId } from "@/components/CardSwiper";
 import { BasicUser } from "../interfaces/User";
 import { fetchGiftedUser } from "../services/userServices";
+import { db } from "@/config/FirebaseConfig";
 
 const mockedUserId = "1";
 const mockedUserName = "Dorian";
@@ -40,8 +41,44 @@ const ChatDetails: React.FC = () => {
       }
     };
 
-    //loadUser();
+    const subscribeToChatMessages = () => {
+      if (!chatId) return;
+  
+      const messagesRef = collection(db, "chats", chatId as string, "messages");
+  
+      const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const newMessage = change.doc.data() as Message;
+
+            const giftedMessage: IMessage = {
+              _id: change.doc.id,
+              text: newMessage.text,
+              createdAt: newMessage.sentAt.toDate(),
+              user: {
+                  _id: newMessage.sentBy,
+                  name: user?.firstName || 'Uknown User',
+                  avatar: user?.profilePicUrl || "https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg"
+              },
+          };
+  
+            setMessages((previousMessages) =>
+              GiftedChat.append(previousMessages, [giftedMessage])
+            );
+          }
+        });
+      });
+  
+      return unsubscribe;
+    };
+
+    loadUser();
     loadInitialMessages();
+    const unsubscribe = subscribeToChatMessages();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [chatId]);
 
   const loadEarlierMessages = async () => {
@@ -55,10 +92,8 @@ const ChatDetails: React.FC = () => {
   };
 
   const onSend = useCallback(async (newMessage: IMessage[] = []) => {
-
-    // biore tylko pierwsza wiadomosc (text) mozna pozniej zrobic, ze mozna wyslac na raz fote i wiadomosc
     const giftedMessage = newMessage[0];
-
+  
     const message: Message = {
       text: giftedMessage.text,
       sentAt: Timestamp.fromDate(
@@ -68,12 +103,10 @@ const ChatDetails: React.FC = () => {
       ),
       sentBy: giftedMessage.user._id as string,
       type: "text",
-      system: false
+      system: false,
     };
-
+  
     await addMessageToChat(chatId as string, message);
-
-    setMessages(previousMessages => GiftedChat.append(previousMessages, newMessage));
   }, [chatId]);
 
 const styles = StyleSheet.create({
@@ -167,22 +200,27 @@ const renderBubble = (props) => (
 
 return (
   <View style={styles.container}>
-      <GiftedChat
-          messages={messages}
-          onSend={(newMessages) => onSend(newMessages)}
-          user={{
-              _id: mockedUserId,
-              name: mockedUserName,
-              avatar: userProfilePic,
-          }}
-          loadEarlier={true}
-          onLoadEarlier={loadEarlierMessages}
-          isLoadingEarlier={loadingEarlier}
-          renderInputToolbar={renderInputToolbar}
-          renderComposer={renderComposer}
-          renderSend={renderSend}
-          renderBubble={renderBubble}
-      />
+      {user ? ( // Check if user is loaded
+        <GiftedChat
+            messages={messages}
+            onSend={(newMessages) => onSend(newMessages)}
+            user={{
+                _id: user.id,
+                name: user.firstName,
+                avatar: user.profilePicUrl,
+            }}
+            loadEarlier={true}
+            onLoadEarlier={loadEarlierMessages}
+            isLoadingEarlier={loadingEarlier}
+            renderInputToolbar={renderInputToolbar}
+            renderComposer={renderComposer}
+            renderSend={renderSend}
+            renderBubble={renderBubble}
+        />
+      ) : (
+        // Show a loading indicator until the user is set
+        <ActivityIndicator size="large" color="#3B82F6" />
+      )}
   </View>
 );
   
