@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from "../config/FirebaseConfig";
+import { db } from "../../config/FirebaseConfig";
 import styled from "styled-components/native";
 import { router } from "expo-router";
 const screenWidth = Dimensions.get('window').width;
@@ -77,7 +77,7 @@ const Account = () => {
       <CenterContainer>
         <ProfileContainer>
           <ProfileImage
-            source={require('../assets/images/profil.jpg')} />
+            source={require('../../assets/images/profil.jpg')} />
           <ProfileName>
             {userData?.firstName ?? "N/A"} {userData?.lastName ?? "N/A"}
           </ProfileName>
@@ -93,7 +93,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon1.png')} />
+                  source={require('../../assets/images/icon1.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>13</StatValue>
@@ -103,7 +103,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon2.png')} />
+                  source={require('../../assets/images/icon2.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>9</StatValue>
@@ -115,7 +115,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon3.png')} />
+                  source={require('../../assets/images/icon3.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>3</StatValue>
@@ -126,7 +126,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon5.png')} />
+                  source={require('../../assets/images/icon5.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>99</StatValue>
@@ -137,7 +137,7 @@ const Account = () => {
           <CanvasRow onPress={() => router.push('/Model')}>
             <RowInfoC>
               <IconImageC
-                source={require('../assets/images/canvas.png')} />
+                source={require('../../assets/images/canvas.png')} />
             </RowInfoC>
             <RowInfoC>
               <StatValueC>Create a new project!</StatValueC>
@@ -153,7 +153,7 @@ const Account = () => {
 const Container = styled(ScrollView).attrs({
   contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
 })`
-    background-color:  #1e1e1e;
+    background-color:  #27272a;
         padding-bottom:65px;
   `;
 

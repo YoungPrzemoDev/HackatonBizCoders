@@ -91,11 +91,11 @@ const Notification = () => {
     },
     scrollView: {
       padding: 16,
-      backgroundColor: '#374151',
+      backgroundColor: '#3f3f46',
     },
     container: {
       marginVertical: 8,
-      backgroundColor: '#3F3F46',
+      backgroundColor: '#52525b',
       padding: 12,
       borderRadius: 16,
       shadowColor: '#000',
@@ -105,7 +105,7 @@ const Notification = () => {
     },
     containerProject: {
       marginVertical: 8,
-      backgroundColor: '#3F3F46',
+      backgroundColor: '#52525b',
       padding: 12,
       borderRadius: 16,
       shadowColor: '#000',
@@ -129,6 +129,12 @@ const Notification = () => {
       textAlign: 'center',
       marginBottom: 8,
     },
+    textRequest: {
+      fontSize: 16,
+      color: '#F9FAFB',
+      textAlign: 'center',
+      marginBottom: 8,
+    },
     textMembers: {
       fontSize: 20,
       color: '#F9FAFB',
@@ -143,8 +149,8 @@ const Notification = () => {
     },
     buttonContainer: {
       flexDirection: 'row',
-      marginTop: 16,
-      justifyContent: 'space-between',
+      marginTop: 8,
+      justifyContent: 'space-evenly',
     },
     button: {
       borderRadius: 12,
@@ -201,8 +207,8 @@ const Notification = () => {
       )}
 
       {/* Request Actions */}
-      <View style={[styles.container, { borderColor: '#FBBF24', borderWidth: 2 }]}>
-        <Text style={styles.text}>{user?.firstName} wants to join your project "{project?.name}".</Text>
+      <View style={[styles.container, { borderColor: '#fef3c7', borderWidth:1.52 }]}>
+        <Text style={styles.textRequest}>{user?.firstName} wants to join your project "{project?.name}".</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.button, styles.acceptButton]}

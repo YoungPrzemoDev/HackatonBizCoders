@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components/native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Dimensions, Alert } from "react-native";
-import { Link, router } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { SafeAreaView, TextInput, TouchableOpacity } from "react-native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -18,6 +18,18 @@ export default function Login() {
     email: "",
     password: "",
   });
+
+  const { emailProp, passwordProp } = useLocalSearchParams();
+
+  useEffect(() => {
+    if (emailProp || passwordProp) {
+      setForm((prevForm) => ({
+        ...prevForm,
+        email: typeof emailProp === "string" ? emailProp : prevForm.email,
+        password: typeof passwordProp === "string" ? passwordProp : prevForm.password,
+      }));
+    }
+  }, [emailProp, passwordProp]);
 
   async function handleLogin() {
     const { email, password } = form;

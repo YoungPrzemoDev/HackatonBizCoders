@@ -10,7 +10,8 @@ export interface ProjectData {
   userId: number;  // np. 2
   image: string;  // np. "https://example.com/sample-image-green.jpg"
   longDescription: string;  // Długi opis projektu
-  tags: string[];  // Tablica tagów (np. ["Green Energy", "Sustainability", "Renewable"])
+  tags: string[];
+  insight: string;  // Tablica tagów (np. ["Green Energy", "Sustainability", "Renewable"])
 }
 
 
@@ -31,7 +32,8 @@ export interface ProjectData {
         userId: docData.userId || 0,  // Ustawienie domyślnej wartości 0, jeśli brak
         image: docData.image || '',  // Ustawienie domyślnej pustej wartości, jeśli brak
         longDescription: docData.longDescription || '',  // Długi opis
-        tags: docData.tags || [],  // Tablica tagów, domyślnie pusta tablica, jeśli brak
+        tags: docData.tags || [],
+        insight: docData.insight  // Tablica tagów, domyślnie pusta tablica, jeśli brak
       });
     });
     return projectList;

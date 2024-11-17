@@ -42,6 +42,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { addNotification } from "@/app/services/notificationService";
 import { fetchTagsResponse6 } from "@/app/services/gptPromt";
+import * as Progress from 'react-native-progress';
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -256,7 +257,7 @@ const CardSwiper = () => {
         await updateDoc(projectDocRef, {
           insight: project.insight
         });
-  
+        return true;
         console.log(`Updated project ${project.id} with insight: ${project.insight}`);
       }
   
@@ -310,11 +311,11 @@ const CardSwiper = () => {
         }));
 
         console.log("Projects with Insights:", projectsWithInsights);
-        await updateProjectsWithInsights(db, projectsWithInsights);
-
+        const x0 = await updateProjectsWithInsights(db, projectsWithInsights);
+        console.log(x0);
         
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
+        // const recommendation = await getRecommendation(userId);
+        // console.log(recommendation);
         // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
         console.log(
@@ -322,32 +323,35 @@ const CardSwiper = () => {
           fetchedData.map((item) => item.id)
         );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
-        console.log(
-          "xddd sorting:",
-          finalSortedData.map((item) => item.id)
-        );
-        setVisibleCards(finalSortedData);
-        setData(finalSortedData);
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // console.log(
+        //   "xddd sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );
+        setVisibleCards(fetchedData);
+        setData(fetchedData);
         
         
 
         setIsLoading(false);
+        console.log(fetchedData[0].id);
+
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
       }
     };
     fetchData();
+    setIsLoading(false);
   }, []);
 
   const swiped = async (direction: string, projectID: string) => {
@@ -420,16 +424,16 @@ const CardSwiper = () => {
     }
   };
 
-  useEffect(() => {
-    if (data.length > 0) {
-      setAnimations(
-        data.map(() => ({
-          scale: new Animated.Value(0.75),
-          borderRadius: new Animated.Value(30),
-        }))
-      );
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data.length > 0) {
+  //     setAnimations(
+  //       data.map(() => ({
+  //         scale: new Animated.Value(0.75),
+  //         borderRadius: new Animated.Value(30),
+  //       }))
+  //     );
+  //   }
+  // }, [data]);
 
   // const resetAllAnimations = () => {
   //   animations.forEach((anim) => {
@@ -476,21 +480,21 @@ const CardSwiper = () => {
     const selectedCardId = card.id;
     const isExpanded = expandedCardId === selectedCardId;
 
-    // Animated.parallel([
-    //   Animated.timing(animations[cardIndex].scale, {
-    //     toValue: isExpanded ? 0.75 : 1,
-    //     duration: 300,
-    //     useNativeDriver: false,
-    //   }),
-    //   Animated.timing(animations[cardIndex].borderRadius, {
-    //     toValue: isExpanded ? 30 : 0,
-    //     duration: 300,
-    //     useNativeDriver: false,
-    //   }),
-    // ]).start(() => {
-    //   setExpandedCardId(isExpanded ? null : callCount);
-    //   console.log("Liczba wywołań toggleExpandCard:", callCount);
-    // });
+    Animated.parallel([
+      // Animated.timing(animations[cardIndex].scale, {
+      //   toValue: isExpanded ? 0.75 : 1,
+      //   duration: 300,
+      //   useNativeDriver: false,
+      // }),
+      // Animated.timing(animations[cardIndex].borderRadius, {
+      //   toValue: isExpanded ? 30 : 0,
+      //   duration: 300,
+      //   useNativeDriver: false,
+      // }),
+    ]).start(() => {
+      setExpandedCardId(isExpanded ? null : callCount);
+      console.log("Liczba wywołań toggleExpandCard:", callCount);
+    });
   };
 
   const handleCardSwipe = async (direction: string, cardIndex: number) => {
@@ -559,6 +563,11 @@ const CardSwiper = () => {
                 <InfoContainer>
                   <TitleText>Long Description </TitleText>
                   <SectionText> {selectedCard.longDescription} </SectionText>
+                </InfoContainer>
+
+                <InfoContainer>
+                  <TitleText>Your work in the project </TitleText>
+                  <SectionText> {selectedCard.insight} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>
@@ -652,7 +661,7 @@ const CardSwiper = () => {
                 />
               )}
               stackSize={3}
-              backgroundColor={"#eeeff0"}
+              backgroundColor={"#27272a"}
               verticalSwipe={false}
               horizontalSwipe={expandedCardId === null}
               onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
@@ -710,7 +719,7 @@ const CardSwiper = () => {
           </>
         )
       ) : (
-        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
+        <Progress.CircleSnail color={['red', 'green', 'blue']} size={100} strokeCap="square" animating={true} borderWidth={20}/>
       )}
     </MainContainer>
   );
@@ -732,19 +741,19 @@ const StyledText = styled.Text`
 //gdy karta znika
 const MainContainer = styled.View`
   flex: 1;
-  background-color: white;
+  background-color: #44403c ;
   justify-content: center;
 `;
 
 const MainContainer2 = styled.View`
   flex: 1;
-  background-color: #eeeff0;
+ background-color: #27272a ;
   align-items: center;
   justify-content: center;
 `;
 
 const TopContainer = styled.View`
-  background-color: #eeeff0;
+  background-color: #27272a;
   align-items: center;
   justify-content: center;
 `;
@@ -757,7 +766,7 @@ const StyledScrollView = styled.ScrollView.attrs(() => ({
   },
 }))`
   flex: 1;
-  background-color: #eeeff0;
+  background-color: #27272a;
 `;
 
 const InfoContainer = styled.View`
@@ -766,60 +775,64 @@ const InfoContainer = styled.View`
   width: 90%;
   padding: 20px;
   background-color: red;
-  background-color: #ffffff;
+  background-color:#3f3f46;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   border-radius: 20px;
-  margin-top: 15px;
+  margin-top: 5px;
 `;
 
 const NameText = styled.Text`
-  font-size: 38px;
+  font-size: 18px;
   font-weight: bold;
   text-align: center;
   margin-top: 60px;
-  color: black;
+  color: white;
 `;
 
 const DescriptionText = styled.Text`
-  font-size: 28spx;
+  font-size: 15spx;
   text-align: center;
   margin-bottom: 5px;
 `;
 
 const TitleText = styled.Text`
   font-weight: bold;
-  font-size: 26px;
+  font-size: 18px;
   text-align: center;
   margin-bottom: 5px;
-  color: black;
+  color: white;
 `;
 
 const SectionText = styled.Text`
   font-size: 15px;
   text-align: center;
   margin-bottom: 5px;
+  color:#d4d4d8;
 `;
 //dol karty
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
-  background-color: #ffffff;
+  background-color: #3f3f46 ;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   align-self: center;
-  margin-top: -50px;
-  bordercolor: #ffffff;
+  bordercolor: #red;
+  width:90%;
+  min-height:80%;
+
 `;
 
 const CardImage = styled(Animated.Image)`
-  height: 450px;
+  height: 220px;
   width: 100%;
   border-top-left-radius: 25px;
   border-top-right-radius: 25px;
+
 `;
 
 const CardDetails = styled.View`
@@ -827,16 +840,17 @@ const CardDetails = styled.View`
 `;
 
 const CardTitle = styled.Text`
-  font-size: 44px;
+  font-size: 26px;
   font-weight: bold;
   text-align: center;
   margin-bottom: 5px;
+  color:white;
 `;
 
 const CardDescription = styled.Text`
-  font-size: 24px;
+  font-size: 22px;
   text-align: center;
-  color: #6b7280;
+  color: #d6d3d1;
 `;
 
 const StyledButton = styled.TouchableOpacity`
