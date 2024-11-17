@@ -164,3 +164,43 @@ export const fetchTagsResponseChallenges = async (description) => {
         return '';
     }
 };
+
+export const scienceHelper = async (description) => {
+    const API_KEY = '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'; // Replace with your actual API key
+    const prompt = `Here is the link for the business start-up project: "${description}". Please search the page given in the link. Identify challenges and main problems that the provided start-up addresses. Provide this as ongoing text without commas or arrays.`;
+
+    try {
+        console.log('Fetching challenges for:', description);
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                max_tokens: 300, // Increase this if you expect longer text
+            }),
+        });
+
+        if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error('Error details:', errorDetails);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorDetails.error.message}`);
+        }
+
+        const data = await response.json();
+        let challengesText = data.choices[0]?.message?.content?.trim();
+
+        // Flatten the challenges into a single string (remove newlines and excess whitespace)
+        challengesText = challengesText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        console.log('Cleaned challenges text:', challengesText);
+
+        return challengesText; // Return the challenges as a single clean string
+    } catch (error) {
+        console.error('Error fetching GPT response for challenges:', error.message);
+        return '';
+    }
+};
