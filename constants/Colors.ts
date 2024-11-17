@@ -12,6 +12,7 @@ export const Colors = {
   WHITE:"#FFFFFF",
   BLACK:"#000000",
   GRAY:"#B0C4DE",
+  ZINC_INACTIVE: "#71717a",
   light: {
     text: '#11181C',
     background: '#fff',

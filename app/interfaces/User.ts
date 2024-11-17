@@ -3,7 +3,7 @@ export interface User {
     firstName: string;
     lastName: string;
     login: string;
-    paswword: string;
+    password: string;
     email: string;
     joinDate: Date;
     profilePicUrl?: string;
@@ -15,6 +15,24 @@ export interface User {
   }
 
 export interface BasicUser {
+  id: string;
   firstName: string;
   profilePicUrl: string;
+}
+
+export interface UserToNotification {
+  id: string,
+  firstName: string,
+  lastName: string,
+  profilePicUrl: string,
+  email: string,
+  // lastSeen: number,
+  userType?: "Businessman" | "Scientist",
+  about: string,
+  tags: string[];
+}
+
+export interface UserInteraction{
+  projectID: string;
+  userId:string;
 }

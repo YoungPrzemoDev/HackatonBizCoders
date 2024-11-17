@@ -17,7 +17,8 @@ export async function addMessageToChat(chatId: string, message: Message): Promis
 export async function getMessages(
     chatId: string,
     limitCount: number = 20,
-    startAfterDoc: QueryDocumentSnapshot | null = null
+    startAfterDoc: QueryDocumentSnapshot | null = null,
+    system: boolean = false
 ): Promise<{ messages: IMessage[], lastVisible: QueryDocumentSnapshot | null }> {
     try {
         console.log("chatId z getMessages ", chatId, typeof(chatId))
@@ -44,7 +45,8 @@ export async function getMessages(
                         _id: messageData.sentBy,
                         name: user?.firstName || 'Uknown User',
                         avatar: user?.profilePicUrl || "https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg"
-                    }
+                    },
+                    ...(system && { system: true })
                 };
 
                 return giftedMessage;

@@ -1,4 +1,5 @@
 import { db } from "@/config/FirebaseConfig";
+import { query, Timestamp, where } from "firebase/firestore";
 import {
   collection,
   doc,
@@ -6,6 +7,7 @@ import {
   getDocs,
   updateDoc,
   arrayUnion,
+  addDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import React, { useState, useRef, useEffect } from "react";
@@ -19,15 +21,29 @@ import {
   Text,
   View,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { styled } from "styled-components/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { fetchProjects, ProjectData } from "../services/FirebaseService";
-import { getRecommendation } from "../services/RecommenadtionService";
+import {
+  addProjectUser,
+  fetchProjects,
+  ProjectData,
+  fetchUserProjects,
+} from "../services/FirebaseService";
+import { UserInteraction } from "@/app/interfaces/User";
+import {
+  getRecommendation,
+  sendInterraction,
+} from "@/services/RecommenadtionService";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { addNotification } from "@/app/services/notificationService";
+import { fetchTagsResponse6 } from "@/app/services/gptPromt";
+import * as Progress from 'react-native-progress';
 const { height, width } = Dimensions.get("window");
 
 export const joinGroup = async (projectId: string, userId: string) => {
@@ -44,7 +60,111 @@ export const joinGroup = async (projectId: string, userId: string) => {
   }
 };
 
-const fetchCurrentUserId = async () => {
+export const clickabilityGroup = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const addToGroup = projectData?.addToGroup || [];
+
+    const lastValue = addToGroup.length > 0 ? addToGroup[addToGroup.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      addToGroup: arrayUnion(newValue),
+      addToGroupTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+export const clickabilityViewership = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const viewership = projectData?.viewership || [];
+
+    const lastValue = viewership.length > 0 ? viewership[viewership.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      viewership: arrayUnion(newValue),
+      viewershipTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+export const clickabilityFavorities = async (projectId: string) => {
+  try {
+    const projectRef = doc(db, `projects/${projectId}/clickability/userActivity`);
+
+    const projectDoc = await getDoc(projectRef);
+
+    if (!projectDoc.exists()) {
+      console.error("Project document does not exist!");
+      return false;
+    }
+
+    const projectData = projectDoc.data();
+    const addFav = projectData?.addFav || [];
+
+    const lastValue = addFav.length > 0 ? addFav[addFav.length - 1] : 0;
+    const newValue = lastValue + 1;
+
+    await updateDoc(projectRef, {
+      addFav: arrayUnion(newValue),
+      addFavTime: arrayUnion(Timestamp.now())
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding user to group:", error);
+    return false;
+  }
+};
+
+const handleJoinFavorites = async (cardId: string) => {
+  const currentUserId = await fetchCurrentUserId();
+
+  if (!currentUserId || !cardId) {
+    console.error("Missing user ID or card ID");
+    return;
+  }
+
+  const success2 = await clickabilityFavorities(cardId);
+  if (success2) {
+    console.log("Card successfully joined the group!");
+  } else {
+    console.error("Failed to join the Card");
+  }
+
+};
+
+export const fetchCurrentUserId = async () => {
   const auth = getAuth();
   const currentUserId = await AsyncStorage.getItem("userId");
   console.log("Fetched currentUserId:", currentUserId);
@@ -61,45 +181,27 @@ const handleJoinGroup = async (cardId: string) => {
     return;
   }
 
-  const success = await joinGroup(cardId, currentUserId);
-  if (success) {
-    console.log("User successfully joined the group!");
-  } else {
-    console.error("Failed to join the group");
-  }
+  // const success = await joinGroup(cardId, currentUserId);
+  // if (success) {
+  //   console.log("User successfully joined the group!");
+  // } else {
+  //   console.error("Failed to join the group");
+  // }
+
+  await addNotification(currentUserId, cardId);
 };
 
-const getCardStyle = (cardIndex, animations) => {
-  const animatedScale = animations[cardIndex].scale;
 
-  const animatedHeight = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [height * 0.9, height],
-  });
-  const animatedWidth = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [width * 1.1, width],
-  });
-  const animatedRadius = animatedScale.interpolate({
-    inputRange: [0.75, 1],
-    outputRange: [30, 1],
-  });
 
-  return {
-    width: animatedWidth,
-    height: animatedHeight,
-    transform: [{ scale: animatedScale }],
-    borderRadius: animatedRadius,
-  };
-};
 
-const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
+
+const Card = ({ card, cardIndex, onPress, animations }) => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
 
   return (
     <TouchableWithoutFeedback onPress={onPress}>
-      <CardContainer style={getCardStyle(cardIndex, animations)}>
+      <CardContainer>
         <CardImage source={{ uri: card.image }} resizeMode={"stretch"} />
         <CardDetails>
           <CardTitle>{card.name}</CardTitle>
@@ -109,6 +211,7 @@ const Card = ({ card, cardIndex, onPress, animations, projectId }) => {
     </TouchableWithoutFeedback>
   );
 };
+let counter = 0;
 let callCount = 0;
 const CardSwiper = () => {
   const [projectId, setProjectId] = useState<number>(1); // Initial project ID
@@ -116,94 +219,239 @@ const CardSwiper = () => {
   //console.log("Dane przed przypisaniem:", data);
   const [visibleCards, setVisibleCards] = useState<ProjectData[]>([]);
   const [data, setData] = useState<ProjectData[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [resetKey, setResetKey] = useState(0);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const imageScale = useRef(new Animated.Value(1)).current;
+  const [userID, setUserID] = useState<string>(null);
+  const [characters, setCharacters] = useState<any[]>([]); // Tablica na projekty z bazy
+  const [lastDirection, setLastDirection] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false); // Stan dla modala
+  const INITIAL_CARD_COUNT = 4;
 
   const [animations, setAnimations] = useState([]);
 
   console.log("Jestem w swiper");
 
+  async function handleGenerateLongDescription1(prompts) {
+    if (prompts && prompts.length) {
+      try {
+        const results = await Promise.all(
+          prompts.map(prompt => fetchTagsResponse6(prompt)) // Pass each prompt to the fetch function
+        );
+        return results; // Array of results for each project
+      } catch (error) {
+        console.error("Error generating long descriptions:", error);
+      }
+    } else {
+      Alert.alert("Warning", "Please provide prompts first.");
+    }
+  }
+
+  async function updateProjectsWithInsights(db, projectsWithInsights) {
+    try {
+      for (const project of projectsWithInsights) {
+        // Reference to the specific project document
+        const projectDocRef = doc(db, "projects", project.id);
+  
+        // Update the document with the new `insight` field
+        await updateDoc(projectDocRef, {
+          insight: project.insight
+        });
+        return true;
+        console.log(`Updated project ${project.id} with insight: ${project.insight}`);
+      }
+  
+      console.log("All projects updated successfully!");
+    } catch (error) {
+      console.error("Error updating projects with insights:", error);
+    }
+  }
+
   useEffect(() => {
-    // Fetch projects when the component mounts
     const fetchData = async () => {
       try {
         const userId = await AsyncStorage.getItem("userId");
+        setUserID(userId);
         console.log(userId);
-        const recommendation = await getRecommendation(userId);
-        console.log(recommendation);
-        console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        const projectsRef = collection(db, "projects"); // Reference to the 'projects' collection
+        const querySnapshot = await getDocs(projectsRef); // Get all documents from the collection
+
+        const projects = querySnapshot.docs.map(doc => doc.data()); // Map over docs and get the data
+        
+        console.log(projects);
+
+        const userRef = collection(db, "users"); // Reference to the 'projects' collection
+        const q = query(userRef, where('id', '==', userId)); 
+        const querySnapshot2 = await getDocs(q);
+        const projectList = [];
+        querySnapshot2.forEach((doc) => {
+          projectList.push({
+            about: doc.data().about,
+            name: Array.isArray(doc.data().description) ? doc.data().description.join(", ") : doc.data().description
+          });
+        });
+
+        const promptData = `About me: ${projectList[0].about}. Key points: ${projectList[0].name}.`;
+
+        // Prepare a new prompt that incorporates project details
+        const projectPrompts = projects.map(project => {
+          const projectDetails = `Project name: ${project.name || project.description}. Long description: ${project.longDescription || "N/A"}`;
+          return `${promptData} How can I help with this project, tell me this in one sentence? ${projectDetails}`;
+        });
+
+        console.log("Prepared Prompts for Projects:", projectPrompts);
+
+        const results = await handleGenerateLongDescription1(projectPrompts);
+        console.log("Results for Projects:", results);
+
+        // Optionally associate results with projects
+        const projectsWithInsights = projects.map((project, index) => ({
+          ...project,
+          insight: results[index] || "No insight generated"
+        }));
+
+        console.log("Projects with Insights:", projectsWithInsights);
+        const x0 = await updateProjectsWithInsights(db, projectsWithInsights);
+        console.log(x0);
+        
+        // const recommendation = await getRecommendation(userId);
+        // console.log(recommendation);
+        // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
         const fetchedData: ProjectData[] = await fetchProjects();
-        //useState(data); // Set fetched data as visible cards
-        //console.log(fetchedData)
-        //sortowanie
         console.log(
           "Before sorting:",
           fetchedData.map((item) => item.id)
         );
 
-        const sortedData = await Promise.all(
-          fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        // const sortedData = await Promise.all(
+        //   fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
-        // Teraz, gdy mamy indeksy, sortujemy elementy synchronicznie
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // console.log(
+        //   "xddd sorting:",
+        //   finalSortedData.map((item) => item.id)
+        // );
+        setVisibleCards(fetchedData);
+        setData(fetchedData);
+        
+        
 
-        for (let index = 0; index < finalSortedData.length; index++) {
-          const element = finalSortedData[index];
-          console.log("ID:", element.id);
-          console.log("Tittle", element.name);
-          console.log("Key partners:", element.keyPartners);
-          console.log("------------------------------------------");
-        }
-        console.log(
-          "After sorting:",
-          finalSortedData.map((item) => item.id)
-        );
+        setIsLoading(false);
+        console.log(fetchedData[0].id);
 
-        ////////
-        setData(finalSortedData);
-        setVisibleCards(finalSortedData);
         //console.log(sortedData);
       } catch (error) {
         console.error("Error fetching projects on mount:", error);
       }
     };
     fetchData();
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (data.length > 0) {
-      setAnimations(
-        data.map(() => ({
-          scale: new Animated.Value(0.75),
-          borderRadius: new Animated.Value(30),
-        }))
-      );
-    }
-  }, [data]);
+  const swiped = async (direction: string, projectID: string) => {
+    setLastDirection(direction);
+    const userId = await AsyncStorage.getItem("userId");
+    if (direction == "right") {
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID, userId);
+      console.log("Teraz Otwarty projekt ", projectID);
+      setModalVisible(true);
 
-  const resetAllAnimations = () => {
-    animations.forEach((anim) => {
-      Animated.parallel([
-        Animated.timing(anim.scale, {
-          toValue: 0.75,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(anim.borderRadius, {
-          toValue: 30,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    });
+      const project: ProjectData = data.find(
+        (project) => project.id === projectID
+      );
+      const newInteraction: UserInteraction = {
+        projectID: project.id,
+        userId: userID,
+      };
+      console.log("Pisze co wysyłam", newInteraction);
+      sendInterraction(newInteraction);
+      console.log("wyszukany projekt", project.name);
+      //usuwam projekt wyslany
+      counter++;
+
+      console.log("counter", counter);
+      if (counter === INITIAL_CARD_COUNT) {
+        //!!tutaj trzeba wlaczyc loading screen
+
+        setIsLoading(true);
+        const recommendation1 = await getRecommendation(userId);
+        const fetchedData1: ProjectData[] = await fetchProjects();
+        console.log(
+          "Before sorting:",
+          fetchedData1.map((item) => item.id)
+        );
+
+        const sortedData1 = await Promise.all(
+          fetchedData1.map(async (item) => {
+            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+            const index = await recommendation1.indexOf(item.id);
+            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+          })
+        );
+
+        sortedData1.sort((a, b) => a.index - b.index);
+        const finalSortedData1 = sortedData1.map(({ index, ...item }) => item);
+        console.log(
+          "xddd:",
+          finalSortedData1.map((item) => item.id)
+        );
+
+        console.log("xddd", finalSortedData1);
+        setData([]);
+        //pobranie tablicy wyswietlonych projektow oraz wyswietlenie tych innych
+        const array = await fetchUserProjects(userID);
+        console.log("array ::::", array);
+        const filteredData = finalSortedData1.filter(
+          (project) => !array.includes(project.id)
+        );
+        setData((prevData) => [...prevData, ...filteredData]);
+        setResetKey((prevKey) => prevKey + 1);
+        setIsLoading(false);
+        counter = 0;
+        //!!tu wylaczyc loading screen
+      }
+    } else if (direction == "left") {
+      counter++;
+      //dodaenie wywietlonego projektu do firebase
+      await addProjectUser(projectID, userId);
+    }
   };
+
+  // useEffect(() => {
+  //   if (data.length > 0) {
+  //     setAnimations(
+  //       data.map(() => ({
+  //         scale: new Animated.Value(0.75),
+  //         borderRadius: new Animated.Value(30),
+  //       }))
+  //     );
+  //   }
+  // }, [data]);
+
+  // const resetAllAnimations = () => {
+  //   animations.forEach((anim) => {
+  //     Animated.parallel([
+  //       Animated.timing(anim.scale, {
+  //         toValue: 0.75,
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //       Animated.timing(anim.borderRadius, {
+  //         toValue: 30,
+  //         duration: 300,
+  //         useNativeDriver: false,
+  //       }),
+  //     ]).start();
+  //   });
+  // };
 
   const expandImage = (imageUri) => {
     setExpandedImage(imageUri);
@@ -214,15 +462,15 @@ const CardSwiper = () => {
     }).start();
   };
 
-  const resetImage = () => {
-    Animated.timing(imageScale, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start(() => {
-      setExpandedImage(null);
-    });
-  };
+  // const resetImage = () => {
+  //   Animated.timing(imageScale, {
+  //     toValue: 1,
+  //     duration: 300,
+  //     useNativeDriver: false,
+  //   }).start(() => {
+  //     setExpandedImage(null);
+  //   });
+  // };
 
   const toggleExpandCard = (cardIndex: number) => {
     console.log("INdex przekazywany z karty!!!", cardIndex);
@@ -234,29 +482,31 @@ const CardSwiper = () => {
     const isExpanded = expandedCardId === selectedCardId;
 
     Animated.parallel([
-      Animated.timing(animations[cardIndex].scale, {
-        toValue: isExpanded ? 0.75 : 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animations[cardIndex].borderRadius, {
-        toValue: isExpanded ? 30 : 0,
-        duration: 300,
-        useNativeDriver: false,
-      }),
+      // Animated.timing(animations[cardIndex].scale, {
+      //   toValue: isExpanded ? 0.75 : 1,
+      //   duration: 300,
+      //   useNativeDriver: false,
+      // }),
+      // Animated.timing(animations[cardIndex].borderRadius, {
+      //   toValue: isExpanded ? 30 : 0,
+      //   duration: 300,
+      //   useNativeDriver: false,
+      // }),
     ]).start(() => {
       setExpandedCardId(isExpanded ? null : callCount);
       console.log("Liczba wywołań toggleExpandCard:", callCount);
     });
   };
 
-  const handleCardSwipe = (cardIndex: number) => {
+  const handleCardSwipe = async (direction: string, cardIndex: number) => {
+    
     if (cardIndex < 0 || cardIndex >= visibleCards.length) return;
     const cardId = visibleCards[cardIndex].id;
+    const success2 = await clickabilityViewership(cardId);
+    await swiped(direction, cardId);
     setVisibleCards((currentCards) =>
       currentCards.filter((card) => card.id !== cardId)
     );
-
     callCount += 1;
   };
 
@@ -269,18 +519,11 @@ const CardSwiper = () => {
   }) => {
     console.log("INdexxxxxxxx w imagelist:", cardIndex);
     const selectedCard = data[cardIndex];
-    // console.log("ID:",selectedCard.id);
-    // console.log("Tittle",selectedCard.name);
-    // console.log("Key partners:",selectedCard.keyPartners);
-    // console.log("------------------------------------------")
-
-    // console.log("ImageList",cardIndex);
-    // console.log("IDX",selectedCard.id);
 
     return (
       <>
         {expandedImage ? (
-          <TouchableWithoutFeedback onPress={resetImage}>
+          <TouchableWithoutFeedback>
             <Animated.View
               style={{
                 position: "absolute",
@@ -301,7 +544,7 @@ const CardSwiper = () => {
                   width: "100%",
                   height: "100%",
                   resizeMode: "contain",
-                  transform: [{ scale: imageScale }],
+                  // transform: [{ scale: imageScale }],
                 }}
               />
             </Animated.View>
@@ -314,43 +557,18 @@ const CardSwiper = () => {
               </TopContainer>
               <StyledScrollView>
                 <InfoContainer>
-                  <TitleText>Key partners </TitleText>
-                  <SectionText> {selectedCard.keyPartners} </SectionText>
+                  <TitleText>Description </TitleText>
+                  <SectionText> {selectedCard.description} </SectionText>
                 </InfoContainer>
+               
                 <InfoContainer>
-                  <TitleText>Key activities </TitleText>
-                  <SectionText> {selectedCard.keyActivities} </SectionText>
+                  <TitleText>Long Description </TitleText>
+                  <SectionText> {selectedCard.longDescription} </SectionText>
                 </InfoContainer>
+
                 <InfoContainer>
-                  <TitleText>Key resources </TitleText>
-                  <SectionText> {selectedCard.keyResources} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Value proposition </TitleText>
-                  <SectionText> {selectedCard.valuePropositions} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer relationships </TitleText>
-                  <SectionText>
-                    {" "}
-                    {selectedCard.customerRelationships}{" "}
-                  </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Chanels </TitleText>
-                  <SectionText> {selectedCard.channels} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Customer segments </TitleText>
-                  <SectionText> {selectedCard.customerSegments} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Cost structure </TitleText>
-                  <SectionText> {selectedCard.costStructure} </SectionText>
-                </InfoContainer>
-                <InfoContainer>
-                  <TitleText>Revenue Streams </TitleText>
-                  <SectionText> {selectedCard.revenueStreams} </SectionText>
+                  <TitleText>Your work in the project </TitleText>
+                  <SectionText> {selectedCard.insight} </SectionText>
                 </InfoContainer>
               </StyledScrollView>
             </MainContainer2>
@@ -373,7 +591,7 @@ const CardSwiper = () => {
     const projectId = visibleCards[cardIndex].id;
     setCurrentCardID(projectId);
 
-    handleCardSwipe(cardIndex);
+    handleCardSwipe("right", cardIndex);
     setShowOverlay(true);
     animateButtons();
   };
@@ -419,13 +637,13 @@ const CardSwiper = () => {
   };
 
   return (
-    <MainContainer>
+    <MainContainer key={resetKey}>
       {visibleCards.length > 0 ? (
         expandedCardId !== null ? (
           <ImageList
             cardIndex={expandedCardId} //tu sie podaje numer projektu id a nie index i zmienia sie indeks
             onBackPress={() => {
-              resetAllAnimations();
+              // resetAllAnimations();
               setExpandedCardId(null);
             }}
           />
@@ -444,12 +662,12 @@ const CardSwiper = () => {
                 />
               )}
               stackSize={3}
-              backgroundColor={"#eeeff0"}
+              backgroundColor={"#27272a"}
               verticalSwipe={false}
               horizontalSwipe={expandedCardId === null}
               onTapCard={(cardIndex) => toggleExpandCard(cardIndex)}
               onSwipedLeft={(cardIndex) => {
-                handleCardSwipe(cardIndex);
+                handleCardSwipe("left", cardIndex);
                 console.log("Left Swipe", cardIndex);
               }}
               onSwipedRight={(cardIndex) => handleRightSwipe(cardIndex)}
@@ -475,20 +693,6 @@ const CardSwiper = () => {
                     >
                       <Icon name="people-outline" size={30} color="#fff" />
                     </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[0].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0],
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Join the group
-                    </AnimatedText>
                   </Animated.View>
 
                   <Animated.View
@@ -503,25 +707,12 @@ const CardSwiper = () => {
                       onPress={() => {
                         console.log("Add to favorites");
                         console.log(currentCardID);
+                        handleJoinFavorites(currentCardID);
                         closeOverlay();
                       }}
                     >
                       <Icon name="heart-outline" size={30} color="#fff" />
                     </RoundButtonContainer>
-                    <AnimatedText
-                      style={{
-                        transform: [
-                          {
-                            translateX: textAnimations[1].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [-width, 0],
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      Add to favorites
-                    </AnimatedText>
                   </Animated.View>
                 </ButtonContainer>
               </OverlayContainer>
@@ -529,7 +720,7 @@ const CardSwiper = () => {
           </>
         )
       ) : (
-        <StyledText>Brak więcej kart do wyświetlenia.</StyledText>
+        <ActivityIndicator size="large" color="#3B82F6" />
       )}
     </MainContainer>
   );
@@ -543,7 +734,7 @@ function setVisibleCards(projectData: { id: string }[]) {
 const StyledText = styled.Text`
   color: red;
   text-align: center;
-  font-size: large;
+  font-size: 20;
   font-weight: bold;
   margin-top: 200px;
   margin-bottom: 60px;
@@ -551,19 +742,19 @@ const StyledText = styled.Text`
 //gdy karta znika
 const MainContainer = styled.View`
   flex: 1;
-  background-color: white;
+  background-color: #44403c ;
   justify-content: center;
 `;
 
 const MainContainer2 = styled.View`
   flex: 1;
-  background-color: #eeeff0;
+ background-color: #27272a ;
   align-items: center;
   justify-content: center;
 `;
 
 const TopContainer = styled.View`
-  background-color: #eeeff0;
+  background-color: #27272a;
   align-items: center;
   justify-content: center;
 `;
@@ -576,7 +767,7 @@ const StyledScrollView = styled.ScrollView.attrs(() => ({
   },
 }))`
   flex: 1;
-  background-color: #eeeff0;
+  background-color: #27272a;
 `;
 
 const InfoContainer = styled.View`
@@ -585,60 +776,64 @@ const InfoContainer = styled.View`
   width: 90%;
   padding: 20px;
   background-color: red;
-  background-color: #ffffff;
+  background-color:#3f3f46;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   border-radius: 20px;
-  margin-top: 15px;
+  margin-top: 5px;
 `;
 
 const NameText = styled.Text`
-  font-size: 38px;
+  font-size: 18px;
   font-weight: bold;
   text-align: center;
   margin-top: 60px;
-  color: black;
+  color: white;
 `;
 
 const DescriptionText = styled.Text`
-  font-size: 28spx;
+  font-size: 15spx;
   text-align: center;
   margin-bottom: 5px;
 `;
 
 const TitleText = styled.Text`
   font-weight: bold;
-  font-size: 26px;
+  font-size: 18px;
   text-align: center;
   margin-bottom: 5px;
-  color: black;
+  color: white;
 `;
 
 const SectionText = styled.Text`
   font-size: 15px;
   text-align: center;
   margin-bottom: 5px;
+  color:#d4d4d8;
 `;
 //dol karty
 const CardContainer = styled(Animated.View)`
   border-radius: 50px;
-  background-color: #ffffff;
+  background-color: #3f3f46 ;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   align-self: center;
-  margin-top: -50px;
-  bordercolor: #ffffff;
+  bordercolor: #red;
+  width:90%;
+  min-height:80%;
+
 `;
 
 const CardImage = styled(Animated.Image)`
-  height: 450px;
+  height: 220px;
   width: 100%;
   border-top-left-radius: 25px;
   border-top-right-radius: 25px;
+
 `;
 
 const CardDetails = styled.View`
@@ -646,16 +841,17 @@ const CardDetails = styled.View`
 `;
 
 const CardTitle = styled.Text`
-  font-size: 44px;
+  font-size: 26px;
   font-weight: bold;
   text-align: center;
   margin-bottom: 5px;
+  color:white;
 `;
 
 const CardDescription = styled.Text`
-  font-size: 24px;
+  font-size: 22px;
   text-align: center;
-  color: #6b7280;
+  color: #d6d3d1;
 `;
 
 const StyledButton = styled.TouchableOpacity`

@@ -41,6 +41,7 @@ const Stories = () => {
   );
 
   return (
+    
     <AppIntroSlider
       renderItem={renderItem}
       data={slides}

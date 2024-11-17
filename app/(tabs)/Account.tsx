@@ -10,13 +10,15 @@ import {
   Pressable,
   ScrollView,
   GestureResponderEvent,
-  Dimensions
+  Dimensions,
+  StatusBar
 } from "react-native";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from "../config/FirebaseConfig";
+import { db } from "../../config/FirebaseConfig";
 import styled from "styled-components/native";
 import { router } from "expo-router";
+import DashboardRow from "../DashboardRow";
 const screenWidth = Dimensions.get('window').width;
 interface UserData {
   email: string;
@@ -74,10 +76,11 @@ const Account = () => {
 
 
     <Container>
+               <StatusBar translucent backgroundColor="red" barStyle="light-content" />
       <CenterContainer>
         <ProfileContainer>
           <ProfileImage
-            source={require('../assets/images/profil.jpg')} />
+            source={require('../../assets/images/profil.jpg')} />
           <ProfileName>
             {userData?.firstName ?? "N/A"} {userData?.lastName ?? "N/A"}
           </ProfileName>
@@ -93,7 +96,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon1.png')} />
+                  source={require('../../assets/images/icon1.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>13</StatValue>
@@ -103,7 +106,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon2.png')} />
+                  source={require('../../assets/images/icon2.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>9</StatValue>
@@ -115,7 +118,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon3.png')} />
+                  source={require('../../assets/images/icon3.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>3</StatValue>
@@ -126,7 +129,7 @@ const Account = () => {
             <RowElement>
               <RowInfo>
                 <IconImage
-                  source={require('../assets/images/icon5.png')} />
+                  source={require('../../assets/images/icon5.png')} />
               </RowInfo>
               <RowInfo>
                 <StatValue>99</StatValue>
@@ -137,13 +140,15 @@ const Account = () => {
           <CanvasRow onPress={() => router.push('/Model')}>
             <RowInfoC>
               <IconImageC
-                source={require('../assets/images/canvas.png')} />
+                source={require('../../assets/images/canvas.png')} />
             </RowInfoC>
             <RowInfoC>
               <StatValueC>Create a new project!</StatValueC>
-              <StatLabel> With Business Canvas Model. </StatLabel>
+              <StatLabel>With the help of AI </StatLabel>
             </RowInfoC>
           </CanvasRow>
+
+          <DashboardRow />
         </UnderProfile>
       </CenterContainer>
     </Container>
@@ -153,7 +158,8 @@ const Account = () => {
 const Container = styled(ScrollView).attrs({
   contentContainerStyle: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
 })`
-    background-color:  #1e1e1e;
+    background-color:  #27272a;
+        padding-bottom:65px;
   `;
 
 const CenterContainer = styled.View`
@@ -161,6 +167,7 @@ const CenterContainer = styled.View`
      height:100%;
      align-items: center;
      border-radius:20px;
+     padding-bottom:65px;
 
   `;
 
@@ -177,6 +184,7 @@ const ProfileContainer = styled.View`
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
+  padding-bottom:15px;
   `;
 
 

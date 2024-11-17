@@ -6,7 +6,7 @@ def create_collection(name: str):
         name="idModel",
         dtype=DataType.VARCHAR,#???????
         is_primary=True,
-        max_length=1300
+        max_length=3000
         #auto_id=True
     )
 
@@ -14,7 +14,7 @@ def create_collection(name: str):
     value1 = FieldSchema(
         name="value1",
         dtype=DataType.VARCHAR,
-        max_length=1300
+        max_length=3000
     )
     vector1 = FieldSchema(
         name="vector1",
@@ -25,7 +25,7 @@ def create_collection(name: str):
     value2 = FieldSchema(
         name="value2",
         dtype=DataType.VARCHAR,
-        max_length=1300
+        max_length=3000
     )
     vector2 = FieldSchema(
         name="vector2",
@@ -36,7 +36,7 @@ def create_collection(name: str):
     value3 = FieldSchema(
         name="value3",
         dtype=DataType.VARCHAR,
-        max_length=1300
+        max_length=3000
     )
     vector3 = FieldSchema(
         name="vector3",
@@ -47,7 +47,7 @@ def create_collection(name: str):
     value4 = FieldSchema(
         name="value4",
         dtype=DataType.VARCHAR,
-        max_length=1300
+        max_length=3000
     )
     vector4 = FieldSchema(
         name="vector4",
@@ -115,3 +115,19 @@ def createIndex(inserted_rows,name):
         print("Succesfull")
     except MilvusException as e:
         print(e)
+
+def getDocumentwithProjectEmbed(userId:str,projectID:str):
+    collection=Collection("USER"+userId)
+    results= collection.query(
+        expr=f'idModel == "{projectID}"',
+        output_fields=["vector2"]
+    )
+    vector_long_description=[result['vector2'] for result in results]
+    print("$$$vector long decription $$$",np.array((vector_long_description[0])))
+    return np.array([vector_long_description[0]])
+
+def calculateNewUserVector(user_vector,vector_long_description):
+    learning_rate=0.2
+    adjustment = learning_rate*vector_long_description
+    newUserVector=(user_vector+adjustment) / np.linalg.norm(user_vector+adjustment)
+    return newUserVector
