@@ -32,7 +32,7 @@ const CardSwiper = () => {
       id: "1",
       name: "Joe Doe",
       description: "Researcher in environmental science, focusing on renewable energy sources.",
-      longDescription: "Anna Kowalski is an environmental scientist with a passion for renewable energy research. Her work focuses on developing sustainable energy solutions to reduce carbon emissions. She has published multiple papers on wind and solar energy integration into urban environments.",
+      longDescription: "Joe Doe is an environmental scientist with a passion for renewable energy research. Her work focuses on developing sustainable energy solutions to reduce carbon emissions. She has published multiple papers on wind and solar energy integration into urban environments.",
       image:
         "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80",
       generatedPrompt: null,
