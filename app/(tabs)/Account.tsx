@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from "../../config/FirebaseConfig";
 import styled from "styled-components/native";
 import { router } from "expo-router";
+import DashboardRow from "../DashboardRow";
 const screenWidth = Dimensions.get('window').width;
 interface UserData {
   email: string;
@@ -144,6 +145,8 @@ const Account = () => {
               <StatLabel>With the help of AI </StatLabel>
             </RowInfoC>
           </CanvasRow>
+
+          <DashboardRow />
         </UnderProfile>
       </CenterContainer>
     </Container>
