@@ -115,20 +115,21 @@ const Select = () => {
           <Title>Choose your account type</Title>
         </TopContainer>
         <DownContainer>
+        <TouchableOpacity onPress={() => router.push('/RegisterScientist')}>
           <LeftContainer>
-          <TouchableOpacity onPress={() => router.push('/RegisterScientist')}>
             <AnimatedLeftImage
               source={require('../assets/images/na.jpg')}
               resizeMode="contain"
              // style={{ opacity: fadeAnimLeft }}
             />
-            </TouchableOpacity>
+        
               <Label>Scientist</Label>
           </LeftContainer>
+          </TouchableOpacity>
           <RightContainer>
           <TouchableOpacity onPress={handleInvestorClick}>
             <AnimatedRightImage2
-              source={require('../assets/images/invest2.png')}
+              source={require('../assets/images/inv3.png')}
               resizeMode="contain"
            //   style={{ opacity: fadeAnimRight2 }}
             />
@@ -193,6 +194,7 @@ const LeftContainer = styled.View`
   width: 33.3%;
   height: 100%;
   align-items: center;
+  margin-left:50px;
   
 `;
 //background-color: blue;
@@ -201,6 +203,7 @@ const RightContainer = styled.View`
   width: 33.3%;
   height: 100%;
   align-items: center;
+    margin-left:-50px;
 `;
 
 //background-color: pink;
@@ -212,7 +215,7 @@ const RightContainer2 = styled.View`
 `;
 
 const AnimatedLeftImage = styled(Animated.Image)`
-  width: 100px;
+  width: 150px;
   height: 200px;
 
 `;
@@ -223,7 +226,7 @@ const AnimatedRightImage = styled(Animated.Image)`
 `;
 
 const AnimatedRightImage2 = styled(Animated.Image)`
-  width: 400px;
+  width: 110px;
   height: 200px;
 
 `;
@@ -233,7 +236,7 @@ const Label = styled.Text`
   color: #333;
   margin-top: 5px; /* Odstęp od obrazów */
   text-align: center;
-  margin-left:-5px;
+  margin-left:-20px;
   
 `;
 

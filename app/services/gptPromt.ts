@@ -42,6 +42,55 @@ export const fetchGPTResponseName = async (description) => {
 };
 
 
+export const fetchGPTResponsepodbiel = async (descriptions,descriptionp) => {
+    const API_KEY = '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';
+    const prompt = `
+    Based on the following description of the scientist and the project, describe in one or two sentences how the scientist can help achieve the goals of the project.
+    Focus on the scientist's specific skills, experiences, and how these can directly contribute to the success of the project.
+    
+    Scientist's Description: ${descriptions}
+    
+    Project Description: ${descriptionp}
+  `;
+
+    try {
+        console.log("link");
+
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 1000
+            })
+        });
+
+        if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error('Error details:', errorDetails);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorDetails.error.message}`);
+        }
+
+        const data = await response.json();
+        if (!data.choices || !data.choices.length) {
+            throw new Error("No choices found in GPT response");
+        }
+
+        // Poprawiono dostęp do odpowiedzi dla chat API
+        return data.choices[0].message.content.trim();
+    } catch (error) {
+        console.error("Error fetching GPT response:", error.message);
+        return "An error occurred while connecting to GPT.";
+    }
+};
+
 
 export const fetchTagsResponseDescription = async (description) => {
     const API_KEY = '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';
@@ -204,3 +253,5 @@ export const scienceHelper = async (description) => {
         return '';
     }
 };
+
+
