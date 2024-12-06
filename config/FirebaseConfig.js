@@ -9,6 +9,7 @@ import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
   apiKey: "AIzaSyDq-L8zLKcnB6nWh4jxXxAtkpm06CkB00M",
   authDomain: "binder-b97c8.firebaseapp.com",
+  databaseURL: "https://binder-b97c8-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "binder-b97c8",
   storageBucket: "binder-b97c8.firebasestorage.app",
   messagingSenderId: "410320664517",

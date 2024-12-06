@@ -708,32 +708,32 @@ function CardSwiper() {
       
         const fetchData = async () => {
           try {
-           const userId = await AsyncStorage.getItem("userId");
-           setUserID(userId);
-            console.log(userId);
-            const recommendation = await getRecommendation(userId);
-            console.log(recommendation);
-            // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
-            const fetchedData: ProjectData[] = await fetchProjects();
-            console.log("Before sorting:",fetchedData.map((item) => item.id));
+        //    const userId = await AsyncStorage.getItem("userId");
+        //    setUserID(userId);
+        //     console.log(userId);
+        //     const recommendation = await getRecommendation(userId);
+        //     console.log(recommendation);
+        //     // console.log("jdksfhdkjhgfkdjhsgjkdhgkjSshgkdjh");
+        const fetchedData: ProjectData[] = await fetchProjects();
+        //     console.log("Before sorting:",fetchedData.map((item) => item.id));
 
-            const sortedData = await Promise.all(
-            fetchedData.map(async (item) => {
-            // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
-            const index = await recommendation.indexOf(item.id);
-            return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
-          })
-        );
+        //     const sortedData = await Promise.all(
+        //     fetchedData.map(async (item) => {
+        //     // Dla każdego elementu `fetchedData` pobieramy asynchronicznie jego indeks z `recommendation`
+        //     const index = await recommendation.indexOf(item.id);
+        //     return { ...item, index }; // Dodajemy indeks jako nową właściwość obiektu
+        //   })
+        // );
 
-        sortedData.sort((a, b) => a.index - b.index);
-        const finalSortedData = sortedData.map(({ index, ...item }) => item);
-        console.log("After sorting:",finalSortedData.map((item) => item.id));
-
-
+        // sortedData.sort((a, b) => a.index - b.index);
+        // const finalSortedData = sortedData.map(({ index, ...item }) => item);
+        // console.log("After sorting:",finalSortedData.map((item) => item.id));
 
 
 
-            setData(finalSortedData);
+
+
+            setData(fetchedData);
             setIsLoading(false);
             console.log(fetchedData[0].id)
             //console.log(sortedData);
